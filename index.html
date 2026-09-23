@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Packing &amp; Dispatch Performance — Matchazuki</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6EE; --panel:#FFFFFF; --ink:#1C2416; --muted:#5B6650;
+    --line:#DDE3D2; --matcha:#5C7A3A; --matcha-deep:#3E5527;
+    --alert:#B9502F; --gold:#C79A3E;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai',sans-serif;}
+  .wrap{max-width:1200px;margin:0 auto;padding:28px 24px 60px;}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
+  .brand{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-bottom:6px;}
+  .brand .dot{width:22px;height:22px;border-radius:50%;background:var(--matcha);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;}
+  h1{font-size:30px;margin:0;font-weight:700;}
+  h1 .accent{color:var(--gold);}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px;}
+  .meta{text-align:right;font-size:12px;color:var(--muted);}
+  #fetchedAt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);}
+  .actions{margin-top:6px;display:flex;gap:8px;justify-content:flex-end;}
+  button.refresh{background:var(--matcha);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-weight:600;font-size:13px;cursor:pointer;}
+  button.refresh:hover{background:var(--matcha-deep);}
+  .latest{color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .tabs{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+  .tab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--muted);cursor:default;}
+  .tab.active{background:var(--matcha-deep);color:#fff;border-color:var(--matcha-deep);}
+  .tab b{display:block;font-size:14px;color:inherit;}
+
+  .donut-row{display:flex;justify-content:center;margin:20px 0 8px;}
+  .donut{width:200px;height:200px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--matcha) calc(var(--pct)*1%), var(--line) 0);}
+  .donut-inner{width:158px;height:158px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .donut-inner .pct{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:30px;}
+  .donut-caption{text-align:center;color:var(--muted);font-size:13px;margin-bottom:26px;}
+
+  .filters{display:flex;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:20px;}
+  .filters label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
+  .filters select,.filters input{font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:110px;}
+  .filters .fbtn{align-self:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;color:var(--muted);}
+
+  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px;}
+  @media (max-width:900px){.cards{grid-template-columns:repeat(2,1fr);}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 10px;text-align:center;}
+  .card .label{font-size:12px;color:var(--muted);margin-bottom:8px;}
+  .card .val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:24px;}
+  .card.ok .val{color:var(--matcha-deep);}
+  .card.bad .val{color:var(--alert);}
+
+  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:20px;}
+  .chart-card h2{font-size:16px;margin:0 0 2px;}
+  .chart-card .cap{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  svg text{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:var(--muted);}
+
+  .note{margin-top:20px;font-size:12px;color:var(--muted);line-height:1.6;}
+  .err{background:var(--alert);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand"><span class="dot">🍵</span> TDFB DELIVERY OPERATIONS</div>
+      <h1>Packing &amp; Dispatch <span class="accent">Performance</span></h1>
+      <div class="sub">ภาพรวมประสิทธิภาพการแพ็คและจัดส่งสินค้าประจำวัน</div>
+    </div>
+    <div class="meta">
+      Last fetched<br><span id="fetchedAt">—</span>
+      <div class="actions"><button class="refresh" onclick="loadSheet()">Refresh</button></div>
+    </div>
+  </header>
+
+  <div class="err" id="errBox">โหลดข้อมูลจาก Google Sheet ไม่สำเร็จ — ตรวจสอบว่าชีทแชร์แบบ "Anyone with the link can view" แล้วลอง Refresh อีกครั้ง</div>
+  <div class="latest" id="latestLine">กำลังโหลดข้อมูล…</div>
+
+  <div class="tabs">
+    <div class="tab active"><b>On-Time Performance</b>Target ≥ 98%</div>
+    <div class="tab"><b>Replenishment</b>รายสัปดาห์</div>
+    <div class="tab"><b>Forecast</b>ประมาณการ</div>
+  </div>
+
+  <div class="donut-row"><div class="donut" id="donut" style="--pct:0"><div class="donut-inner"><div class="pct" id="pctVal">—</div></div></div></div>
+  <div class="donut-caption">PACKED ON TIME · TARGET 98%</div>
+
+  <div class="filters">
+    <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
+    <div><label>Week</label><select id="fWeek"><option value="">All</option></select></div>
+    <div><label>Shipping</label><select id="fUrgent"><option value="">All</option></select></div>
+    <div><label>Channel</label><select id="fSource"><option value="">All</option></select></div>
+    <div><label>Order Reference</label><input id="fSearch" placeholder="Search order…"></div>
+    <div class="fbtn" onclick="clearFilters()">Clear filters</div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">📦 ORDERS</div><div class="val" id="cOrders">—</div></div>
+    <div class="card ok"><div class="label">✅ PACKED ON TIME</div><div class="val" id="cOnTime">—</div></div>
+    <div class="card bad"><div class="label">⚠️ แพ็คล่าช้า</div><div class="val" id="cLate">—</div></div>
+    <div class="card bad"><div class="label">⚡ ด่วน</div><div class="val" id="cUrgent">—</div></div>
+    <div class="card"><div class="label">📮 ส่งปกติ</div><div class="val" id="cNormal">—</div></div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="label">🛒 PLATFORM</div><div class="val" id="cPlatform">—</div></div>
+    <div class="card"><div class="label">🏬 WALK-IN</div><div class="val" id="cWalkin">—</div></div>
+    <div class="card"><div class="label">🏷️ SKU ที่ขาย</div><div class="val" id="cSku">—</div></div>
+    <div class="card"><div class="label">📍 จุดแพ็คที่ใช้งาน</div><div class="val" id="cStations">—</div></div>
+    <div class="card"><div class="label">🔀 ช่องทางขาย</div><div class="val" id="cChannels">—</div></div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Weekly Order Volume</h2>
+    <div class="cap">Unique orders per week</div>
+    <svg id="weekChart" viewBox="0 0 1140 220" width="100%" height="220"></svg>
+  </div>
+
+  <div class="note">
+    Sheet ID: 1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8 · Tab: DATA — ตัวเลขคำนวณจากคอลัมน์ "PK เสร็จ ภายในกี่วันที่ต้องส่ง" (ตรงเวลา = "แพ็คเสร็จในวัน"), "Sender Name" ไม่ได้ใช้เป็นชื่อลูกค้าเนื่องจากในชีทตัวอย่างเป็นชื่อร้าน — ปรับ mapping ได้ในโค้ดส่วน CONFIG ด้านบนของ script.
+  </div>
+</div>
+
+<script>
+const SHEET_ID = "1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8";
+const SHEET_NAME = "DATA";
+const ON_TIME_VALUE = "แพ็คเสร็จในวัน";
+
+let ALL_ROWS = [];
+
+function loadSheet(){
+  document.getElementById('errBox').style.display = 'none';
+  document.getElementById('latestLine').textContent = 'กำลังโหลดข้อมูล…';
+  const cb = 'gvizCB' + Date.now();
+  window[cb] = function(json){
+    try{ parseRows(json); }catch(e){ showErr(); }
+    delete window[cb];
+  };
+  const s = document.createElement('script');
+  s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler=${cb}&sheet=${encodeURIComponent(SHEET_NAME)}`;
+  s.onerror = showErr;
+  s.id = 'gvizScript';
+  const old = document.getElementById('gvizScript');
+  if(old) old.remove();
+  document.body.appendChild(s);
+}
+function showErr(){ document.getElementById('errBox').style.display='block'; document.getElementById('latestLine').textContent=''; }
+
+function parseRows(json){
+  const rows = json.table.rows;
+  ALL_ROWS = rows.map(r=>{
+    const c = r.c;
+    const v = i => c[i] ? (c[i].f || c[i].v) : "";
+    return {
+      year:v(0), month:v(1), week:String(v(2)), orderRef:String(v(3)),
+      created:v(4), expected:v(5), product:v(6), qty:v(7),
+      salesperson:v(8), sender:v(9), source:v(10), urgent:v(11),
+      pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15)
+    };
+  }).filter(r=>r.orderRef);
+  populateFilterOptions();
+  render();
+  document.getElementById('fetchedAt').textContent = new Date().toLocaleString('th-TH');
+}
+
+function populateFilterOptions(){
+  const fill = (id, key) => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    const vals = [...new Set(ALL_ROWS.map(r=>r[key]).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">All</option>' + vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+    sel.value = cur;
+  };
+  fill('fMonth','month'); fill('fWeek','week'); fill('fUrgent','urgent'); fill('fSource','source');
+}
+function clearFilters(){
+  ['fMonth','fWeek','fUrgent','fSource'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSearch').value='';
+  render();
+}
+['fMonth','fWeek','fUrgent','fSource'].forEach(id=>{
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById(id).addEventListener('change', render);
+  });
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('fSearch').addEventListener('input', render);
+});
+
+function render(){
+  if(!ALL_ROWS.length) return;
+  const fMonth = document.getElementById('fMonth').value;
+  const fWeek = document.getElementById('fWeek').value;
+  const fUrgent = document.getElementById('fUrgent').value;
+  const fSource = document.getElementById('fSource').value;
+  const fSearch = document.getElementById('fSearch').value.trim().toLowerCase();
+
+  const rows = ALL_ROWS.filter(r=>
+    (!fMonth || r.month===fMonth) &&
+    (!fWeek || r.week===fWeek) &&
+    (!fUrgent || r.urgent===fUrgent) &&
+    (!fSource || r.source===fSource) &&
+    (!fSearch || r.orderRef.toLowerCase().includes(fSearch))
+  );
+
+  const orders = new Map();
+  rows.forEach(r=>{
+    if(!orders.has(r.orderRef)){
+      orders.set(r.orderRef, {onTime:true, urgent:r.urgent, source:r.source, week:r.week, station:new Set()});
+    }
+    const o = orders.get(r.orderRef);
+    if(r.pkStatus !== ON_TIME_VALUE) o.onTime = false;
+    if(r.station) o.station.add(r.station);
+  });
+
+  const orderList = [...orders.values()];
+  const total = orderList.length;
+  const onTime = orderList.filter(o=>o.onTime).length;
+  const late = total - onTime;
+  const urgentN = orderList.filter(o=>o.urgent==='ส่งด่วน').length;
+  const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
+  const walkin = orderList.filter(o=>/walk/i.test(o.source||'')).length;
+  const platform = total - walkin;
+  const skuCount = new Set(rows.map(r=>r.product)).size;
+  const stationSet = new Set(rows.map(r=>r.station).filter(Boolean));
+  const sourceSet = new Set(orderList.map(o=>o.source).filter(Boolean));
+
+  const pct = total ? (onTime/total*100) : 0;
+  document.getElementById('donut').style.setProperty('--pct', pct.toFixed(2));
+  document.getElementById('pctVal').textContent = total ? pct.toFixed(2)+'%' : '—';
+
+  document.getElementById('cOrders').textContent = total.toLocaleString();
+  document.getElementById('cOnTime').textContent = onTime.toLocaleString();
+  document.getElementById('cLate').textContent = late.toLocaleString();
+  document.getElementById('cUrgent').textContent = urgentN.toLocaleString();
+  document.getElementById('cNormal').textContent = normalN.toLocaleString();
+  document.getElementById('cPlatform').textContent = platform.toLocaleString();
+  document.getElementById('cWalkin').textContent = walkin.toLocaleString();
+  document.getElementById('cSku').textContent = skuCount.toLocaleString();
+  document.getElementById('cStations').textContent = stationSet.size.toLocaleString();
+  document.getElementById('cChannels').textContent = sourceSet.size.toLocaleString();
+
+  const latestRow = rows[rows.length-1];
+  document.getElementById('latestLine').textContent = latestRow
+    ? `Latest — ${latestRow.orderRef} · ${latestRow.source} · ${latestRow.pkStatus===ON_TIME_VALUE?'On time':'Late'}`
+    : 'ไม่พบข้อมูลตามตัวกรองที่เลือก';
+
+  drawWeekly(orderList);
+}
+
+function drawWeekly(orderList){
+  const byWeek = {};
+  orderList.forEach(o=>{ byWeek[o.week] = (byWeek[o.week]||0) + 1; });
+  const weeks = Object.keys(byWeek).sort((a,b)=>Number(a)-Number(b));
+  const svg = document.getElementById('weekChart');
+  if(!weeks.length){ svg.innerHTML=''; return; }
+  const max = Math.max(...weeks.map(w=>byWeek[w]), 1);
+  const W=1140,H=220,pad=30;
+  const step = (W-2*pad)/Math.max(weeks.length-1,1);
+  const pts = weeks.map((w,i)=>{
+    const x = pad + i*step;
+    const y = H-pad - (byWeek[w]/max)*(H-2*pad);
+    return [x,y];
+  });
+  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const area = path + ` L${pts[pts.length-1][0].toFixed(1)},${H-pad} L${pts[0][0].toFixed(1)},${H-pad} Z`;
+  let labels = '';
+  weeks.forEach((w,i)=>{
+    if(i%2===0) labels += `<text x="${pts[i][0]}" y="${H-8}" text-anchor="middle">W${w}</text>`;
+  });
+  svg.innerHTML = `
+    <path d="${area}" fill="#5C7A3A22" stroke="none"></path>
+    <path d="${path}" fill="none" stroke="#5C7A3A" stroke-width="2"></path>
+    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#3E5527"></circle>`).join('')}
+    ${labels}`;
+}
+
+loadSheet();
+</script>
+</body>
+</html>
