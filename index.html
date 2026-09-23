@@ -138,7 +138,7 @@ function loadSheet(){
     delete window[cb];
   };
   const s = document.createElement('script');
-  s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler=${cb}&sheet=${encodeURIComponent(SHEET_NAME)}`;
+  s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${cb}&sheet=${encodeURIComponent(SHEET_NAME)}`;
   s.onerror = showErr;
   s.id = 'gvizScript';
   const old = document.getElementById('gvizScript');
