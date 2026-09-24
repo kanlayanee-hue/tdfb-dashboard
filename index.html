@@ -64,6 +64,12 @@
   .chart-card .cap{font-size:12px;color:var(--muted);margin-bottom:18px;}
   svg text{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:var(--muted);}
   svg text.wk-val{fill:var(--matcha-deep);font-size:11px;font-weight:700;}
+  .pbar-grid{stroke:var(--line);stroke-width:1;}
+  .pbar-axis{fill:var(--muted);font-size:9px;font-family:'IBM Plex Mono',monospace;}
+  .pbar-label{fill:var(--ink);font-size:10.5px;}
+  .pbar-val{fill:var(--ink);font-weight:700;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+  .pbar-target{stroke:var(--alert);stroke-width:1.3;stroke-dasharray:3,3;}
+  .pbar-target-label{fill:var(--alert);font-size:9px;font-family:'IBM Plex Mono',monospace;}
 
   .note{margin-top:22px;font-size:11.5px;color:var(--muted);line-height:1.7;font-family:'IBM Plex Mono',monospace;}
   .err{background:var(--alert);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
@@ -160,17 +166,17 @@
     <div class="mini-card">
       <h3>Packing On-Time</h3>
       <div class="capsm">Target ≥ 98%</div>
-      <div id="barOnTime"></div>
+      <svg id="barOnTime" viewBox="0 0 300 190" width="100%" height="190"></svg>
     </div>
     <div class="mini-card">
       <h3>Orders by Platform</h3>
       <div class="capsm">Platform vs Walk-in</div>
-      <div id="barPlatform"></div>
+      <svg id="barPlatform" viewBox="0 0 300 190" width="100%" height="190"></svg>
     </div>
     <div class="mini-card">
       <h3>ประเภทการส่ง</h3>
       <div class="capsm">ด่วน vs ปกติ</div>
-      <div id="barShipping"></div>
+      <svg id="barShipping" viewBox="0 0 300 190" width="100%" height="190"></svg>
     </div>
   </div>
 
@@ -356,13 +362,43 @@ function barsHTML(items, max){
       <div class="bv">${it[1].toLocaleString()}</div>
     </div>`).join('');
 }
+function drawPercentChart(elId, items, targetPct){
+  const svg = document.getElementById(elId);
+  const total = items.reduce((s,it)=>s+it[1],0) || 1;
+  const W=300,H=190,padL=32,padB=26,padT=14;
+  const chartH = H-padT-padB, chartW = W-padL-14;
+  const n = items.length;
+  const gap = chartW/n;
+  const barW = Math.min(46, gap*0.5);
+  let grid = '';
+  [0,20,40,60,80,100].forEach(g=>{
+    const y = padT + chartH - (g/100*chartH);
+    grid += `<line class="pbar-grid" x1="${padL}" y1="${y}" x2="${W-8}" y2="${y}"></line>
+      <text class="pbar-axis" x="${padL-6}" y="${y+3}" text-anchor="end">${g}%</text>`;
+  });
+  let bars = '';
+  items.forEach((it,i)=>{
+    const pct = it[1]/total*100;
+    const cx = padL + gap*i + gap/2;
+    const bh = pct/100*chartH;
+    const y = padT + chartH - bh;
+    bars += `
+      <rect x="${(cx-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bh.toFixed(1)}" rx="3" fill="${it[2]}"></rect>
+      <text class="pbar-val" x="${cx}" y="${(y-6).toFixed(1)}" text-anchor="middle">${pct.toFixed(pct<1?2:1)}%</text>
+      <text class="pbar-label" x="${cx}" y="${H-8}" text-anchor="middle">${it[0]}</text>`;
+  });
+  let target = '';
+  if(targetPct!=null){
+    const ty = padT + chartH - (targetPct/100*chartH);
+    target = `<line class="pbar-target" x1="${padL}" y1="${ty}" x2="${W-8}" y2="${ty}"></line>
+      <text class="pbar-target-label" x="${W-10}" y="${ty-3}" text-anchor="end">${targetPct}%</text>`;
+  }
+  svg.innerHTML = grid + bars + target;
+}
 function drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN){
-  document.getElementById('barOnTime').innerHTML = barsHTML(
-    [['ในวัน',sameDay,'#5C7A3A'],['ก่อนกำหนด',early,'#B08A2E'],['ล่าช้า',late,'#B9502F']], Math.max(sameDay,early,late,1));
-  document.getElementById('barPlatform').innerHTML = barsHTML(
-    [['Platform',platform,'#5C7A3A'],['Walk-in',walkin,'#C79A3E']], Math.max(platform,walkin,1));
-  document.getElementById('barShipping').innerHTML = barsHTML(
-    [['ด่วน',urgentN,'#B9502F'],['ปกติ',normalN,'#5C7A3A']], Math.max(urgentN,normalN,1));
+  drawPercentChart('barOnTime', [['ตรงเวลา',sameDay+early,'#5C7A3A'],['ล่าช้า',late,'#B9502F']], 98);
+  drawPercentChart('barPlatform', [['Platform',platform,'#5C7A3A'],['Walk-in',walkin,'#C79A3E']], null);
+  drawPercentChart('barShipping', [['ด่วน',urgentN,'#B9502F'],['ปกติ',normalN,'#5C7A3A']], null);
 }
 
 function drawBrandPie(rows){
