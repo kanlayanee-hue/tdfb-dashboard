@@ -5,59 +5,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Packing &amp; Dispatch Performance — Matchazuki</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F4F6EE; --panel:#FFFFFF; --ink:#1C2416; --muted:#5B6650;
-    --line:#DDE3D2; --matcha:#5C7A3A; --matcha-deep:#3E5527;
-    --alert:#B9502F; --gold:#C79A3E;
+    --bg:#F7F7F1; --panel:#FFFFFF; --ink:#232A1C; --muted:#767F6D;
+    --line:#E7E6DC; --matcha:#5C7A3A; --matcha-deep:#33421F;
+    --alert:#B4512E; --gold:#B08A2E;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai',sans-serif;}
-  .wrap{max-width:1200px;margin:0 auto;padding:28px 24px 60px;}
-  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
-  .brand{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-bottom:6px;}
-  .brand .dot{width:22px;height:22px;border-radius:50%;background:var(--matcha);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;}
-  h1{font-size:30px;margin:0;font-weight:700;}
-  h1 .accent{color:var(--gold);}
-  .sub{color:var(--muted);font-size:14px;margin-top:4px;}
-  .meta{text-align:right;font-size:12px;color:var(--muted);}
-  #fetchedAt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);}
-  .actions{margin-top:6px;display:flex;gap:8px;justify-content:flex-end;}
-  button.refresh{background:var(--matcha);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-weight:600;font-size:13px;cursor:pointer;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai',sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 70px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:2px;}
+
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .brand{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin-bottom:10px;letter-spacing:.03em;}
+  .brand .dot{width:20px;height:20px;border-radius:50%;background:var(--matcha);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;}
+  h1{font-family:'Fraunces',serif;font-size:36px;margin:0;font-weight:600;letter-spacing:-.01em;}
+  h1 .accent{color:var(--matcha-deep);font-style:italic;}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px;}
+  .meta{text-align:right;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+  #fetchedAt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;display:block;margin-top:3px;}
+  .actions{margin-top:10px;display:flex;gap:8px;justify-content:flex-end;}
+  button.refresh{background:var(--ink);color:#fff;border:none;border-radius:100px;padding:8px 18px;font-weight:600;font-size:12px;cursor:pointer;letter-spacing:.03em;}
   button.refresh:hover{background:var(--matcha-deep);}
-  .latest{color:var(--muted);font-size:13px;margin-bottom:16px;}
-  .tabs{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
-  .tab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--muted);cursor:default;}
-  .tab.active{background:var(--matcha-deep);color:#fff;border-color:var(--matcha-deep);}
-  .tab b{display:block;font-size:14px;color:inherit;}
+  .latest{color:var(--muted);font-size:12.5px;margin-bottom:22px;font-family:'IBM Plex Mono',monospace;}
+  .tabs{display:flex;gap:8px;margin-bottom:32px;flex-wrap:wrap;}
+  .tab{background:transparent;border:1px solid var(--line);border-radius:100px;padding:9px 18px;font-size:12.5px;color:var(--muted);cursor:default;}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab b{font-size:12.5px;color:inherit;font-weight:600;}
 
-  .donut-row{display:flex;justify-content:center;margin:20px 0 8px;}
-  .donut{width:200px;height:200px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--matcha) calc(var(--pct)*1%), var(--line) 0);}
-  .donut-inner{width:158px;height:158px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  .donut-inner .pct{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:30px;}
-  .donut-caption{text-align:center;color:var(--muted);font-size:13px;margin-bottom:26px;}
+  .hero{display:flex;align-items:center;gap:40px;flex-wrap:wrap;padding:34px 0 40px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .hero-num{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(56px,9vw,96px);line-height:.95;letter-spacing:-.02em;}
+  #pctVal{font-family:'Fraunces',serif;}
+  .hero-side{flex:1;min-width:220px;}
+  .hero-cap{color:var(--muted);font-size:13px;margin-bottom:14px;}
+  .track{position:relative;height:6px;border-radius:4px;background:var(--line);max-width:420px;}
+  .track-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:var(--matcha);}
+  .track-target{position:absolute;top:-3px;width:2px;height:12px;background:var(--alert);}
+  .track-target-label{position:absolute;top:10px;font-size:10.5px;color:var(--alert);font-family:'IBM Plex Mono',monospace;transform:translateX(-50%);}
+  .donut{display:none;}
 
-  .filters{display:flex;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:20px;}
-  .filters label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
-  .filters select,.filters input{font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:110px;}
-  .filters .fbtn{align-self:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;color:var(--muted);}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:24px;}
+  .filters > div{padding:0;}
+  .filters label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
+  .filters select,.filters input{font-family:'Noto Sans Thai',sans-serif;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:106px;}
+  .filters .fbtn{align-self:flex-end;background:transparent;border:none;border-bottom:1px solid var(--ink);padding:8px 0;font-size:12.5px;cursor:pointer;color:var(--ink);}
 
-  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px;}
+  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
   @media (max-width:900px){.cards{grid-template-columns:repeat(2,1fr);}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 10px;text-align:center;}
-  .card .label{font-size:12px;color:var(--muted);margin-bottom:8px;}
-  .card .val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:24px;}
+  .card{background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 16px;text-align:left;}
+  .card .label{font-size:10.5px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;}
+  .card .val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;}
   .card.ok .val{color:var(--matcha-deep);}
   .card.bad .val{color:var(--alert);}
 
-  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:20px;}
-  .chart-card h2{font-size:16px;margin:0 0 2px;}
-  .chart-card .cap{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .chart-card{background:var(--panel);padding:28px 0;margin-top:0;border-bottom:1px solid var(--line);}
+  .chart-card h2{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px;font-weight:600;}
+  .chart-card .cap{font-size:12px;color:var(--muted);margin-bottom:18px;}
   svg text{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:var(--muted);}
 
-  .note{margin-top:20px;font-size:12px;color:var(--muted);line-height:1.6;}
+  .note{margin-top:22px;font-size:11.5px;color:var(--muted);line-height:1.7;font-family:'IBM Plex Mono',monospace;}
   .err{background:var(--alert);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
+
+  .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
+  @media (max-width:780px){.mini-grid{grid-template-columns:1fr;}}
+  .mini-card{background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px;}
+  .mini-card h3{font-family:'Fraunces',serif;font-size:16px;margin:0;font-weight:600;}
+  .capsm{font-size:11px;color:var(--muted);margin-bottom:14px;}
+  .bar-item{display:flex;align-items:center;gap:10px;font-size:12.5px;margin-bottom:9px;}
+  .bar-item .bn{width:66px;flex-shrink:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-item .bt{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;}
+  .bar-item .bf{height:100%;}
+  .bar-item .bv{width:44px;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px;}
+  #topProducts .bar-item .bn{width:240px;}
+
+  .pie-legend-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;}
+  .legend-item{display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:10px;}
+  .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .legend-item .lv{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:12px;}
+
+  .table-wrap2{overflow-x:auto;}
+  #detailTable{width:100%;border-collapse:collapse;font-size:12.5px;}
+  #detailTable th{text-align:left;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--ink);white-space:nowrap;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;}
+  #detailTable td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  #detailTable td.late{color:var(--alert);font-weight:600;}
 </style>
 </head>
 <body>
@@ -84,8 +115,14 @@
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
-  <div class="donut-row"><div class="donut" id="donut" style="--pct:0"><div class="donut-inner"><div class="pct" id="pctVal">—</div></div></div></div>
-  <div class="donut-caption">PACKED ON TIME · TARGET 98%</div>
+  <div class="hero">
+    <div class="hero-num" id="pctVal">—</div>
+    <div class="hero-side">
+      <div class="hero-cap">PACKED ON TIME · เป้าหมาย ≥ 98%</div>
+      <div class="track"><div class="track-fill" id="trackFill" style="width:0%"></div><div class="track-target" style="left:98%"></div><div class="track-target-label" style="left:98%">98%</div></div>
+    </div>
+    <div class="donut" id="donut" style="--pct:0"></div>
+  </div>
 
   <div class="filters">
     <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
@@ -97,18 +134,18 @@
   </div>
 
   <div class="cards">
-    <div class="card"><div class="label">📦 ORDERS</div><div class="val" id="cOrders">—</div></div>
-    <div class="card ok"><div class="label">✅ PACKED ON TIME</div><div class="val" id="cOnTime">—</div></div>
-    <div class="card bad"><div class="label">⚠️ แพ็คล่าช้า</div><div class="val" id="cLate">—</div></div>
-    <div class="card bad"><div class="label">⚡ ด่วน</div><div class="val" id="cUrgent">—</div></div>
-    <div class="card"><div class="label">📮 ส่งปกติ</div><div class="val" id="cNormal">—</div></div>
+    <div class="card"><div class="label">Orders</div><div class="val" id="cOrders">—</div></div>
+    <div class="card ok"><div class="label">Packed on time</div><div class="val" id="cOnTime">—</div></div>
+    <div class="card bad"><div class="label">แพ็คล่าช้า</div><div class="val" id="cLate">—</div></div>
+    <div class="card bad"><div class="label">ด่วน</div><div class="val" id="cUrgent">—</div></div>
+    <div class="card"><div class="label">ส่งปกติ</div><div class="val" id="cNormal">—</div></div>
   </div>
   <div class="cards">
-    <div class="card"><div class="label">🛒 PLATFORM</div><div class="val" id="cPlatform">—</div></div>
-    <div class="card"><div class="label">🏬 WALK-IN</div><div class="val" id="cWalkin">—</div></div>
-    <div class="card"><div class="label">🏷️ SKU ที่ขาย</div><div class="val" id="cSku">—</div></div>
-    <div class="card"><div class="label">📍 จุดแพ็คที่ใช้งาน</div><div class="val" id="cStations">—</div></div>
-    <div class="card"><div class="label">🔀 ช่องทางขาย</div><div class="val" id="cChannels">—</div></div>
+    <div class="card"><div class="label">Platform</div><div class="val" id="cPlatform">—</div></div>
+    <div class="card"><div class="label">Walk-in</div><div class="val" id="cWalkin">—</div></div>
+    <div class="card"><div class="label">SKU ที่ขาย</div><div class="val" id="cSku">—</div></div>
+    <div class="card"><div class="label">จุดแพ็คที่ใช้งาน</div><div class="val" id="cStations">—</div></div>
+    <div class="card"><div class="label">ช่องทางขาย</div><div class="val" id="cChannels">—</div></div>
   </div>
 
   <div class="chart-card">
@@ -117,6 +154,49 @@
     <svg id="weekChart" viewBox="0 0 1140 220" width="100%" height="220"></svg>
   </div>
 
+  <div class="mini-grid">
+    <div class="mini-card">
+      <h3>Packing On-Time</h3>
+      <div class="capsm">Target ≥ 98%</div>
+      <div id="barOnTime"></div>
+    </div>
+    <div class="mini-card">
+      <h3>Orders by Platform</h3>
+      <div class="capsm">Platform vs Walk-in</div>
+      <div id="barPlatform"></div>
+    </div>
+    <div class="mini-card">
+      <h3>ประเภทการส่ง</h3>
+      <div class="capsm">ด่วน vs ปกติ</div>
+      <div id="barShipping"></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Sales Channel Share</h2>
+    <div class="cap">Orders by Brand (วิเคราะห์จากชื่อสินค้า)</div>
+    <div class="pie-legend-row">
+      <div class="donut" id="brandPie" style="width:150px;height:150px;--pct:0;background:var(--line);"></div>
+      <div id="brandLegend" style="flex:1;min-width:200px;"></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Top Products</h2>
+    <div class="cap">สินค้าที่มีออเดอร์มากที่สุด (Top 8, นับจากรายการสินค้าในออเดอร์)</div>
+    <div id="topProducts"></div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Order Detail</h2>
+    <div class="cap">แสดงเฉพาะรายการที่ไม่ใช่ "แพ็คเสร็จในวัน" (ล่าสุด 15 รายการ)</div>
+    <div class="table-wrap2"><table id="detailTable">
+      <thead><tr><th>Order Ref</th><th>Source</th><th>Product</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="note" id="footerStats"></div>
   <div class="note">
     Sheet ID: 1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8 · Tab: DATA — ตัวเลขคำนวณจากคอลัมน์ "PK เสร็จ ภายในกี่วันที่ต้องส่ง" (ตรงเวลา = "แพ็คเสร็จในวัน"), "Sender Name" ไม่ได้ใช้เป็นชื่อลูกค้าเนื่องจากในชีทตัวอย่างเป็นชื่อร้าน — ปรับ mapping ได้ในโค้ดส่วน CONFIG ด้านบนของ script.
   </div>
@@ -173,4 +253,189 @@ function populateFilterOptions(){
   const fill = (id, key) => {
     const sel = document.getElementById(id);
     const cur = sel.value;
-    const vals = [...new Set(ALL_ROWS.map(r=>r[key]).filter(Boolean))
+    const vals = [...new Set(ALL_ROWS.map(r=>r[key]).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">All</option>' + vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+    sel.value = cur;
+  };
+  fill('fMonth','month'); fill('fWeek','week'); fill('fUrgent','urgent'); fill('fSource','source');
+}
+function clearFilters(){
+  ['fMonth','fWeek','fUrgent','fSource'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSearch').value='';
+  render();
+}
+['fMonth','fWeek','fUrgent','fSource'].forEach(id=>{
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById(id).addEventListener('change', render);
+  });
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('fSearch').addEventListener('input', render);
+});
+
+function render(){
+  if(!ALL_ROWS.length) return;
+  const fMonth = document.getElementById('fMonth').value;
+  const fWeek = document.getElementById('fWeek').value;
+  const fUrgent = document.getElementById('fUrgent').value;
+  const fSource = document.getElementById('fSource').value;
+  const fSearch = document.getElementById('fSearch').value.trim().toLowerCase();
+
+  const rows = ALL_ROWS.filter(r=>
+    (!fMonth || r.month===fMonth) &&
+    (!fWeek || r.week===fWeek) &&
+    (!fUrgent || r.urgent===fUrgent) &&
+    (!fSource || r.source===fSource) &&
+    (!fSearch || r.orderRef.toLowerCase().includes(fSearch))
+  );
+
+  const orders = new Map();
+  rows.forEach(r=>{
+    if(!orders.has(r.orderRef)){
+      orders.set(r.orderRef, {onTime:true, urgent:r.urgent, source:r.source, week:r.week, station:new Set()});
+    }
+    const o = orders.get(r.orderRef);
+    if(r.pkStatus !== ON_TIME_VALUE) o.onTime = false;
+    if(r.station) o.station.add(r.station);
+  });
+
+  const orderList = [...orders.values()];
+  const total = orderList.length;
+  const onTime = orderList.filter(o=>o.onTime).length;
+  const late = total - onTime;
+  const urgentN = orderList.filter(o=>o.urgent==='ส่งด่วน').length;
+  const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
+  const walkin = orderList.filter(o=>/walk/i.test(o.source||'')).length;
+  const platform = total - walkin;
+  const skuCount = new Set(rows.map(r=>r.product)).size;
+  const stationSet = new Set(rows.map(r=>r.station).filter(Boolean));
+  const sourceSet = new Set(orderList.map(o=>o.source).filter(Boolean));
+
+  const pct = total ? (onTime/total*100) : 0;
+  document.getElementById('donut').style.setProperty('--pct', pct.toFixed(2));
+  document.getElementById('trackFill').style.width = Math.min(pct,100).toFixed(2)+'%';
+  document.getElementById('pctVal').textContent = total ? pct.toFixed(1)+'%' : '—';
+
+  document.getElementById('cOrders').textContent = total.toLocaleString();
+  document.getElementById('cOnTime').textContent = onTime.toLocaleString();
+  document.getElementById('cLate').textContent = late.toLocaleString();
+  document.getElementById('cUrgent').textContent = urgentN.toLocaleString();
+  document.getElementById('cNormal').textContent = normalN.toLocaleString();
+  document.getElementById('cPlatform').textContent = platform.toLocaleString();
+  document.getElementById('cWalkin').textContent = walkin.toLocaleString();
+  document.getElementById('cSku').textContent = skuCount.toLocaleString();
+  document.getElementById('cStations').textContent = stationSet.size.toLocaleString();
+  document.getElementById('cChannels').textContent = sourceSet.size.toLocaleString();
+
+  const latestRow = rows[rows.length-1];
+  document.getElementById('latestLine').textContent = latestRow
+    ? `Latest — ${latestRow.orderRef} · ${latestRow.source} · ${latestRow.pkStatus===ON_TIME_VALUE?'On time':'Late'}`
+    : 'ไม่พบข้อมูลตามตัวกรองที่เลือก';
+
+  drawWeekly(orderList);
+  drawMiniBars(onTime, late, platform, walkin, urgentN, normalN);
+  drawBrandPie(rows);
+  drawTopProducts(rows);
+  drawDetailTable(rows);
+  drawFooterStats(total, rows.length, late);
+}
+
+function barsHTML(items, max){
+  return items.map(it=>`
+    <div class="bar-item">
+      <div class="bn">${it[0]}</div>
+      <div class="bt"><div class="bf" style="width:${max?(it[1]/max*100):0}%;background:${it[2]||'var(--matcha)'}"></div></div>
+      <div class="bv">${it[1].toLocaleString()}</div>
+    </div>`).join('');
+}
+function drawMiniBars(onTime, late, platform, walkin, urgentN, normalN){
+  document.getElementById('barOnTime').innerHTML = barsHTML(
+    [['ตรงเวลา',onTime,'#5C7A3A'],['ล่าช้า',late,'#B9502F']], Math.max(onTime,late,1));
+  document.getElementById('barPlatform').innerHTML = barsHTML(
+    [['Platform',platform,'#5C7A3A'],['Walk-in',walkin,'#C79A3E']], Math.max(platform,walkin,1));
+  document.getElementById('barShipping').innerHTML = barsHTML(
+    [['ด่วน',urgentN,'#B9502F'],['ปกติ',normalN,'#5C7A3A']], Math.max(urgentN,normalN,1));
+}
+
+function getBrand(product){
+  if(/rootroute/i.test(product||'')) return 'Rootroute';
+  if(/began/i.test(product||'')) return 'Began';
+  return 'Matchazuki';
+}
+function drawBrandPie(rows){
+  const counts = {};
+  const orderBrand = new Map();
+  rows.forEach(r=>{ if(!orderBrand.has(r.orderRef)) orderBrand.set(r.orderRef, getBrand(r.product)); });
+  orderBrand.forEach(b=>{ counts[b]=(counts[b]||0)+1; });
+  const total = [...orderBrand.values()].length || 1;
+  const colors = {Matchazuki:'#5C7A3A', Began:'#C79A3E', Rootroute:'#8B3A2A'};
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  let acc = 0;
+  const stops = entries.map(([name,n])=>{
+    const pct = n/total*100;
+    const s = `${colors[name]||'#999'} ${acc.toFixed(2)}% ${(acc+pct).toFixed(2)}%`;
+    acc += pct;
+    return s;
+  }).join(', ');
+  document.getElementById('brandPie').style.background = `conic-gradient(${stops})`;
+  document.getElementById('brandLegend').innerHTML = entries.map(([name,n])=>`
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${colors[name]||'#999'}"></span>
+      ${name} <span class="lv">${(n/total*100).toFixed(1)}% · ${n.toLocaleString()} orders</span>
+    </div>`).join('');
+}
+
+function drawTopProducts(rows){
+  const counts = {};
+  rows.forEach(r=>{ if(r.product) counts[r.product] = (counts[r.product]||0) + 1; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max = top.length ? top[0][1] : 1;
+  document.getElementById('topProducts').innerHTML = top.length
+    ? barsHTML(top.map(([name,n])=>[name,n,'#5C7A3A']), max)
+    : `<div style="color:var(--muted);font-size:13px;">ไม่พบข้อมูลสินค้าตามตัวกรองที่เลือก</div>`;
+}
+
+function drawDetailTable(rows){
+  const late = rows.filter(r=>r.pkStatus !== ON_TIME_VALUE).slice(-15).reverse();
+  const tbody = document.querySelector('#detailTable tbody');
+  tbody.innerHTML = late.length ? late.map(r=>`
+    <tr><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td class="late">${r.pkStatus||'ล่าช้า'}</td></tr>
+  `).join('') : `<tr><td colspan="4" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
+}
+
+function drawFooterStats(orders, lineItems, late){
+  document.getElementById('footerStats').textContent =
+    `COUNTUNIQUE(Order Reference) = ${orders.toLocaleString()} จาก ${lineItems.toLocaleString()} line items · ล่าช้า (แพ็ค) = ${late.toLocaleString()} ออเดอร์ · อัปเดตล่าสุด ${new Date().toLocaleString('th-TH')}`;
+}
+
+function drawWeekly(orderList){
+  const byWeek = {};
+  orderList.forEach(o=>{ byWeek[o.week] = (byWeek[o.week]||0) + 1; });
+  const weeks = Object.keys(byWeek).sort((a,b)=>Number(a)-Number(b));
+  const svg = document.getElementById('weekChart');
+  if(!weeks.length){ svg.innerHTML=''; return; }
+  const max = Math.max(...weeks.map(w=>byWeek[w]), 1);
+  const W=1140,H=220,pad=30;
+  const step = (W-2*pad)/Math.max(weeks.length-1,1);
+  const pts = weeks.map((w,i)=>{
+    const x = pad + i*step;
+    const y = H-pad - (byWeek[w]/max)*(H-2*pad);
+    return [x,y];
+  });
+  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const area = path + ` L${pts[pts.length-1][0].toFixed(1)},${H-pad} L${pts[0][0].toFixed(1)},${H-pad} Z`;
+  let labels = '';
+  weeks.forEach((w,i)=>{
+    if(i%2===0) labels += `<text x="${pts[i][0]}" y="${H-8}" text-anchor="middle">W${w}</text>`;
+  });
+  svg.innerHTML = `
+    <path d="${area}" fill="#5C7A3A22" stroke="none"></path>
+    <path d="${path}" fill="none" stroke="#5C7A3A" stroke-width="2"></path>
+    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#3E5527"></circle>`).join('')}
+    ${labels}`;
+}
+
+loadSheet();
+</script>
+</body>
+</html>
