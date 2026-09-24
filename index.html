@@ -311,7 +311,7 @@ function render(){
   const onTime = total - late;
   const urgentN = orderList.filter(o=>o.urgent==='ส่งด่วน').length;
   const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
-  const walkin = orderList.filter(o=>/walk/i.test(o.source||'')).length;
+  const walkin = orderList.filter(o=>!/shopee|tiktok|lazada/i.test(o.source||'')).length;
   const platform = total - walkin;
   const skuCount = new Set(rows.map(r=>r.product)).size;
   const stationSet = new Set(rows.map(r=>r.station).filter(Boolean));
