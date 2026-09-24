@@ -111,7 +111,6 @@
 
   <div class="tabs">
     <div class="tab active"><b>On-Time Performance</b>Target ≥ 98%</div>
-    <div class="tab"><b>Replenishment</b>รายสัปดาห์</div>
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
@@ -188,8 +187,27 @@
   </div>
 
   <div class="chart-card">
+    <h2 style="color:var(--alert);">วิเคราะห์สาเหตุความล่าช้า</h2>
+    <div class="cap">แยกออเดอร์ที่ "แพ็คล่าช้า" ตามจุดแพ็ค / ช่องทางขาย / พนักงานขาย (Top 6 ต่อหมวด)</div>
+    <div class="mini-grid" style="margin-top:0;">
+      <div class="mini-card">
+        <h3 style="font-size:14px;">ตามจุดแพ็ค</h3>
+        <div id="lateByStation" style="margin-top:12px;"></div>
+      </div>
+      <div class="mini-card">
+        <h3 style="font-size:14px;">ตามช่องทางขาย</h3>
+        <div id="lateBySource" style="margin-top:12px;"></div>
+      </div>
+      <div class="mini-card">
+        <h3 style="font-size:14px;">ตามพนักงานขาย</h3>
+        <div id="lateBySales" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
     <h2>Order Detail</h2>
-    <div class="cap">แสดงเฉพาะรายการที่ไม่ใช่ "แพ็คเสร็จในวัน" (ล่าสุด 15 รายการ)</div>
+    <div class="cap">แสดงเฉพาะรายการที่ "แพ็คล่าช้า" (ล่าสุด 15 รายการ)</div>
     <div class="table-wrap2"><table id="detailTable">
       <thead><tr><th>Order Ref</th><th>Source</th><th>Product</th><th>Status</th></tr></thead>
       <tbody></tbody>
@@ -198,14 +216,16 @@
 
   <div class="note" id="footerStats"></div>
   <div class="note">
-    Sheet ID: 1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8 · Tab: DATA — ตัวเลขคำนวณจากคอลัมน์ "PK เสร็จ ภายในกี่วันที่ต้องส่ง" (ตรงเวลา = "แพ็คเสร็จในวัน"), "Sender Name" ไม่ได้ใช้เป็นชื่อลูกค้าเนื่องจากในชีทตัวอย่างเป็นชื่อร้าน — ปรับ mapping ได้ในโค้ดส่วน CONFIG ด้านบนของ script.
+    Sheet ID: 1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8 · Tab: DATA — คอลัมน์ "PK เสร็จ ภายในกี่วันที่ต้องส่ง" แบ่ง 3 ค่า: "แพ็คเสร็จในวัน" / "แพ็คเสร็จก่อนวันจัดส่ง" (ทั้งคู่นับว่าตรงเวลา) / "แพ็คล่าช้า" (นับเป็นล่าช้าเท่านั้น) — ปรับชื่อค่าได้ที่ CONFIG ด้านบนของ script ถ้าคำในชีทสะกดต่างไป
   </div>
 </div>
 
 <script>
 const SHEET_ID = "1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8";
 const SHEET_NAME = "DATA";
-const ON_TIME_VALUE = "แพ็คเสร็จในวัน";
+const SAMEDAY_VALUE = "แพ็คเสร็จในวัน";
+const EARLY_VALUE = "แพ็คเสร็จก่อนวันจัดส่ง";
+const LATE_VALUE = "แพ็คล่าช้า";
 
 let ALL_ROWS = [];
 
@@ -292,17 +312,20 @@ function render(){
   const orders = new Map();
   rows.forEach(r=>{
     if(!orders.has(r.orderRef)){
-      orders.set(r.orderRef, {onTime:true, urgent:r.urgent, source:r.source, week:r.week, station:new Set()});
+      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, station:new Set()});
     }
     const o = orders.get(r.orderRef);
-    if(r.pkStatus !== ON_TIME_VALUE) o.onTime = false;
+    if(r.pkStatus === LATE_VALUE) o.status = 'ล่าช้า';
+    else if(r.pkStatus === EARLY_VALUE && o.status !== 'ล่าช้า') o.status = 'ก่อนกำหนด';
     if(r.station) o.station.add(r.station);
   });
 
   const orderList = [...orders.values()];
   const total = orderList.length;
-  const onTime = orderList.filter(o=>o.onTime).length;
-  const late = total - onTime;
+  const late = orderList.filter(o=>o.status==='ล่าช้า').length;
+  const early = orderList.filter(o=>o.status==='ก่อนกำหนด').length;
+  const sameDay = total - late - early;
+  const onTime = total - late;
   const urgentN = orderList.filter(o=>o.urgent==='ส่งด่วน').length;
   const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
   const walkin = orderList.filter(o=>/walk/i.test(o.source||'')).length;
@@ -329,14 +352,15 @@ function render(){
 
   const latestRow = rows[rows.length-1];
   document.getElementById('latestLine').textContent = latestRow
-    ? `Latest — ${latestRow.orderRef} · ${latestRow.source} · ${latestRow.pkStatus===ON_TIME_VALUE?'On time':'Late'}`
+    ? `Latest — ${latestRow.orderRef} · ${latestRow.source} · ${latestRow.pkStatus||'—'}`
     : 'ไม่พบข้อมูลตามตัวกรองที่เลือก';
 
   drawWeekly(orderList);
-  drawMiniBars(onTime, late, platform, walkin, urgentN, normalN);
+  drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN);
   drawBrandPie(rows);
   drawTopProducts(rows);
   drawDetailTable(rows);
+  drawLateReasons(rows, orders);
   drawFooterStats(total, rows.length, late);
 }
 
@@ -348,9 +372,9 @@ function barsHTML(items, max){
       <div class="bv">${it[1].toLocaleString()}</div>
     </div>`).join('');
 }
-function drawMiniBars(onTime, late, platform, walkin, urgentN, normalN){
+function drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN){
   document.getElementById('barOnTime').innerHTML = barsHTML(
-    [['ตรงเวลา',onTime,'#5C7A3A'],['ล่าช้า',late,'#B9502F']], Math.max(onTime,late,1));
+    [['ในวัน',sameDay,'#5C7A3A'],['ก่อนกำหนด',early,'#B08A2E'],['ล่าช้า',late,'#B9502F']], Math.max(sameDay,early,late,1));
   document.getElementById('barPlatform').innerHTML = barsHTML(
     [['Platform',platform,'#5C7A3A'],['Walk-in',walkin,'#C79A3E']], Math.max(platform,walkin,1));
   document.getElementById('barShipping').innerHTML = barsHTML(
@@ -396,11 +420,30 @@ function drawTopProducts(rows){
 }
 
 function drawDetailTable(rows){
-  const late = rows.filter(r=>r.pkStatus !== ON_TIME_VALUE).slice(-15).reverse();
+  const late = rows.filter(r=>r.pkStatus === LATE_VALUE).slice(-15).reverse();
   const tbody = document.querySelector('#detailTable tbody');
   tbody.innerHTML = late.length ? late.map(r=>`
-    <tr><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td class="late">${r.pkStatus||'ล่าช้า'}</td></tr>
+    <tr><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td class="late">${r.pkStatus}</td></tr>
   `).join('') : `<tr><td colspan="4" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
+}
+
+function drawLateReasons(rows, orders){
+  const lateRefs = new Set([...orders].filter(([ref,o])=>o.status==='ล่าช้า').map(([ref])=>ref));
+  const lateRows = rows.filter(r=>lateRefs.has(r.orderRef));
+  const byStation = {}, bySource = {}, bySales = {};
+  lateRows.forEach(r=>{
+    if(r.station) byStation[r.station] = (byStation[r.station]||0)+1;
+    if(r.source) bySource[r.source] = (bySource[r.source]||0)+1;
+    if(r.salesperson) bySales[r.salesperson] = (bySales[r.salesperson]||0)+1;
+  });
+  const toBars = obj => {
+    const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const max = entries.length ? entries[0][1] : 1;
+    return entries.length ? barsHTML(entries.map(([n,c])=>[n,c,'#B9502F']), max) : `<div style="color:var(--muted);font-size:13px;">ไม่มีข้อมูล</div>`;
+  };
+  document.getElementById('lateByStation').innerHTML = toBars(byStation);
+  document.getElementById('lateBySource').innerHTML = toBars(bySource);
+  document.getElementById('lateBySales').innerHTML = toBars(bySales);
 }
 
 function drawFooterStats(orders, lineItems, late){
