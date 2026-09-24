@@ -68,6 +68,7 @@
   .err{background:var(--alert);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
 
   .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
+  .mini-grid-4{grid-template-columns:repeat(4,1fr);}
   @media (max-width:780px){.mini-grid{grid-template-columns:1fr;}}
   .mini-card{background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px;}
   .mini-card h3{font-family:'Fraunces',serif;font-size:16px;margin:0;font-weight:600;}
@@ -78,6 +79,7 @@
   .bar-item .bf{height:100%;}
   .bar-item .bv{width:44px;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px;}
   #topProducts .bar-item .bn{width:240px;}
+  #lateByRemark .bar-item .bn{width:130px;}
 
   .pie-legend-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;}
   .legend-item{display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:10px;}
@@ -187,29 +189,10 @@
   </div>
 
   <div class="chart-card">
-    <h2 style="color:var(--alert);">วิเคราะห์สาเหตุความล่าช้า</h2>
-    <div class="cap">แยกออเดอร์ที่ "แพ็คล่าช้า" ตามจุดแพ็ค / ช่องทางขาย / พนักงานขาย (Top 6 ต่อหมวด)</div>
-    <div class="mini-grid" style="margin-top:0;">
-      <div class="mini-card">
-        <h3 style="font-size:14px;">ตามจุดแพ็ค</h3>
-        <div id="lateByStation" style="margin-top:12px;"></div>
-      </div>
-      <div class="mini-card">
-        <h3 style="font-size:14px;">ตามช่องทางขาย</h3>
-        <div id="lateBySource" style="margin-top:12px;"></div>
-      </div>
-      <div class="mini-card">
-        <h3 style="font-size:14px;">ตามพนักงานขาย</h3>
-        <div id="lateBySales" style="margin-top:12px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="chart-card">
     <h2>Order Detail</h2>
     <div class="cap">แสดงเฉพาะรายการที่ "แพ็คล่าช้า" (ล่าสุด 15 รายการ)</div>
     <div class="table-wrap2"><table id="detailTable">
-      <thead><tr><th>Order Ref</th><th>Source</th><th>Product</th><th>Status</th></tr></thead>
+      <thead><tr><th>Order Ref</th><th>Source</th><th>Product</th><th>Status</th><th>Remark</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>
@@ -261,7 +244,7 @@ function parseRows(json){
       year:v(0), month:v(1), week:String(v(2)), orderRef:String(v(3)),
       created:v(4), expected:v(5), product:v(6), qty:v(7),
       salesperson:v(8), sender:v(9), source:v(10), urgent:v(11),
-      pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15)
+      pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15), remark:v(16)
     };
   }).filter(r=>r.orderRef);
   populateFilterOptions();
@@ -360,7 +343,6 @@ function render(){
   drawBrandPie(rows);
   drawTopProducts(rows);
   drawDetailTable(rows);
-  drawLateReasons(rows, orders);
   drawFooterStats(total, rows.length, late);
 }
 
@@ -423,27 +405,8 @@ function drawDetailTable(rows){
   const late = rows.filter(r=>r.pkStatus === LATE_VALUE).slice(-15).reverse();
   const tbody = document.querySelector('#detailTable tbody');
   tbody.innerHTML = late.length ? late.map(r=>`
-    <tr><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td class="late">${r.pkStatus}</td></tr>
-  `).join('') : `<tr><td colspan="4" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
-}
-
-function drawLateReasons(rows, orders){
-  const lateRefs = new Set([...orders].filter(([ref,o])=>o.status==='ล่าช้า').map(([ref])=>ref));
-  const lateRows = rows.filter(r=>lateRefs.has(r.orderRef));
-  const byStation = {}, bySource = {}, bySales = {};
-  lateRows.forEach(r=>{
-    if(r.station) byStation[r.station] = (byStation[r.station]||0)+1;
-    if(r.source) bySource[r.source] = (bySource[r.source]||0)+1;
-    if(r.salesperson) bySales[r.salesperson] = (bySales[r.salesperson]||0)+1;
-  });
-  const toBars = obj => {
-    const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    const max = entries.length ? entries[0][1] : 1;
-    return entries.length ? barsHTML(entries.map(([n,c])=>[n,c,'#B9502F']), max) : `<div style="color:var(--muted);font-size:13px;">ไม่มีข้อมูล</div>`;
-  };
-  document.getElementById('lateByStation').innerHTML = toBars(byStation);
-  document.getElementById('lateBySource').innerHTML = toBars(bySource);
-  document.getElementById('lateBySales').innerHTML = toBars(bySales);
+    <tr><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td class="late">${r.pkStatus}</td><td>${r.remark||'—'}</td></tr>
+  `).join('') : `<tr><td colspan="5" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
 }
 
 function drawFooterStats(orders, lineItems, late){
