@@ -151,9 +151,8 @@
   <div class="cards">
     <div class="card"><div class="label">Platform</div><div class="val" id="cPlatform">—</div></div>
     <div class="card"><div class="label">Walk-in</div><div class="val" id="cWalkin">—</div></div>
-    <div class="card"><div class="label">SKU ที่ขาย</div><div class="val" id="cSku">—</div></div>
-    <div class="card"><div class="label">จุดแพ็คที่ใช้งาน</div><div class="val" id="cStations">—</div></div>
-    <div class="card"><div class="label">ช่องทางขาย</div><div class="val" id="cChannels">—</div></div>
+    <div class="card"><div class="label">แพ็คก่อนวันจัดส่ง</div><div class="val" id="cEarly">—</div></div>
+    <div class="card bad"><div class="label">ยังไม่ได้จัดส่ง</div><div class="val" id="cNotShipped">—</div></div>
   </div>
 
   <div class="chart-card">
@@ -303,11 +302,12 @@ function render(){
   const orders = new Map();
   rows.forEach(r=>{
     if(!orders.has(r.orderRef)){
-      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, station:new Set()});
+      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, station:new Set(), shipped:true});
     }
     const o = orders.get(r.orderRef);
     if(r.pkStatus === LATE_VALUE) o.status = 'ล่าช้า';
     else if(r.pkStatus === EARLY_VALUE && o.status !== 'ล่าช้า') o.status = 'ก่อนกำหนด';
+    if(r.status !== 'Done') o.shipped = false;
     if(r.station) o.station.add(r.station);
   });
 
@@ -317,6 +317,7 @@ function render(){
   const early = orderList.filter(o=>o.status==='ก่อนกำหนด').length;
   const sameDay = total - late - early;
   const onTime = total - late;
+  const notShipped = orderList.filter(o=>!o.shipped).length;
   const urgentN = orderList.filter(o=>o.urgent==='ส่งด่วน').length;
   const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
   const walkin = orderList.filter(o=>!/shopee|tiktok|lazada/i.test(o.source||'')).length;
@@ -337,9 +338,8 @@ function render(){
   document.getElementById('cNormal').textContent = normalN.toLocaleString();
   document.getElementById('cPlatform').textContent = platform.toLocaleString();
   document.getElementById('cWalkin').textContent = walkin.toLocaleString();
-  document.getElementById('cSku').textContent = skuCount.toLocaleString();
-  document.getElementById('cStations').textContent = stationSet.size.toLocaleString();
-  document.getElementById('cChannels').textContent = sourceSet.size.toLocaleString();
+  document.getElementById('cEarly').textContent = early.toLocaleString();
+  document.getElementById('cNotShipped').textContent = notShipped.toLocaleString();
 
   const latestRow = rows[rows.length-1];
   document.getElementById('latestLine').textContent = latestRow
@@ -405,85 +405,3 @@ function drawBrandPie(rows){
   const counts = {};
   const orderBrand = new Map();
   rows.forEach(r=>{ if(!orderBrand.has(r.orderRef)) orderBrand.set(r.orderRef, r.sender || 'ไม่ระบุ'); });
-  orderBrand.forEach(b=>{ counts[b]=(counts[b]||0)+1; });
-  const total = [...orderBrand.values()].length || 1;
-  const palette = ['#5C7A3A','#C79A3E','#8B3A2A','#3E5527','#B08A2E','#6B8E4E'];
-  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-  const colors = {};
-  entries.forEach(([name],i)=>{ colors[name] = palette[i % palette.length]; });
-  let acc = 0;
-  const stops = entries.map(([name,n])=>{
-    const pct = n/total*100;
-    const s = `${colors[name]} ${acc.toFixed(2)}% ${(acc+pct).toFixed(2)}%`;
-    acc += pct;
-    return s;
-  }).join(', ');
-  document.getElementById('brandPie').style.background = `conic-gradient(${stops})`;
-  document.getElementById('brandLegend').innerHTML = entries.map(([name,n])=>`
-    <div class="legend-item">
-      <span class="legend-dot" style="background:${colors[name]}"></span>
-      ${name} <span class="lv">${(n/total*100).toFixed(1)}% · ${n.toLocaleString()} orders</span>
-    </div>`).join('');
-
-  const unspecifiedRefs = [...orderBrand.entries()].filter(([ref,b])=>b==='ไม่ระบุ').map(([ref])=>ref);
-  document.getElementById('unspecifiedBrand').innerHTML = unspecifiedRefs.length
-    ? `Order Reference ที่ไม่ระบุ Sender Name (${unspecifiedRefs.length} ออเดอร์): ${unspecifiedRefs.join(', ')}`
-    : '';
-}
-
-function drawTopProducts(rows){
-  const counts = {};
-  rows.forEach(r=>{ if(r.product) counts[r.product] = (counts[r.product]||0) + 1; });
-  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const max = top.length ? top[0][1] : 1;
-  document.getElementById('topProducts').innerHTML = top.length
-    ? barsHTML(top.map(([name,n])=>[name,n,'#5C7A3A']), max)
-    : `<div style="color:var(--muted);font-size:13px;">ไม่พบข้อมูลสินค้าตามตัวกรองที่เลือก</div>`;
-}
-
-function drawDetailTable(rows){
-  const late = rows.filter(r=>r.pkStatus === LATE_VALUE).slice(-15).reverse();
-  const tbody = document.querySelector('#detailTable tbody');
-  tbody.innerHTML = late.length ? late.map(r=>`
-    <tr><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td class="late">${r.pkStatus}</td><td>${r.remark||'—'}</td></tr>
-  `).join('') : `<tr><td colspan="5" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
-}
-
-function drawFooterStats(orders, lineItems, late){
-  document.getElementById('footerStats').textContent =
-    `COUNTUNIQUE(Order Reference) = ${orders.toLocaleString()} จาก ${lineItems.toLocaleString()} line items · ล่าช้า (แพ็ค) = ${late.toLocaleString()} ออเดอร์ · อัปเดตล่าสุด ${new Date().toLocaleString('th-TH')}`;
-}
-
-function drawWeekly(orderList){
-  const byWeek = {};
-  orderList.forEach(o=>{ if(o.week) byWeek[o.week] = (byWeek[o.week]||0) + 1; });
-  const weeks = Object.keys(byWeek).sort((a,b)=>Number(a)-Number(b));
-  const svg = document.getElementById('weekChart');
-  if(!weeks.length){ svg.innerHTML=''; return; }
-  const max = Math.max(...weeks.map(w=>byWeek[w]), 1);
-  const W=1140,H=220,pad=30,padTop=44;
-  const step = (W-2*pad)/Math.max(weeks.length-1,1);
-  const pts = weeks.map((w,i)=>{
-    const x = pad + i*step;
-    const y = padTop + (1-byWeek[w]/max)*(H-pad-padTop);
-    return [x,y];
-  });
-  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-  const area = path + ` L${pts[pts.length-1][0].toFixed(1)},${H-pad} L${pts[0][0].toFixed(1)},${H-pad} Z`;
-  let labels = '';
-  weeks.forEach((w,i)=>{
-    if(i%2===0) labels += `<text x="${pts[i][0]}" y="${H-8}" text-anchor="middle">W${w}</text>`;
-  });
-  let valueLabels = pts.map((p,i)=>`<text class="wk-val" x="${p[0]}" y="${p[1]-8}" text-anchor="middle">${byWeek[weeks[i]]}</text>`).join('');
-  svg.innerHTML = `
-    <path d="${area}" fill="#5C7A3A22" stroke="none"></path>
-    <path d="${path}" fill="none" stroke="#5C7A3A" stroke-width="2"></path>
-    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#3E5527"></circle>`).join('')}
-    ${valueLabels}
-    ${labels}`;
-}
-
-loadSheet();
-</script>
-</body>
-</html>
