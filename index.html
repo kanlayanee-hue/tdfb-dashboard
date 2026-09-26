@@ -308,7 +308,7 @@ function render(){
     const o = orders.get(r.orderRef);
     if(r.pkStatus === LATE_VALUE) o.status = 'ล่าช้า';
     else if(r.pkStatus === EARLY_VALUE && o.status !== 'ล่าช้า') o.status = 'ก่อนกำหนด';
-    if(r.status !== 'Done') o.shipped = false;
+    if(!r.updatedOn) o.shipped = false;
     if(r.station) o.station.add(r.station);
   });
 
