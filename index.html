@@ -146,10 +146,8 @@
     <div class="card ok"><div class="label">Packed on time</div><div class="val" id="cOnTime">—</div></div>
     <div class="card"><div class="label">แพ็คก่อนวันจัดส่ง</div><div class="val" id="cEarly">—</div></div>
     <div class="card bad"><div class="label">แพ็คล่าช้า</div><div class="val" id="cLate">—</div></div>
-    <div class="card bad"><div class="label">ยังไม่ได้จัดส่ง</div><div class="val" id="cNotShipped">—</div></div>
   </div>
   <div class="cards">
-    <div class="card"><div class="label">Customers</div><div class="val" id="cCustomers">—</div></div>
     <div class="card"><div class="label">Platform</div><div class="val" id="cPlatform">—</div></div>
     <div class="card"><div class="label">Walk-in</div><div class="val" id="cWalkin">—</div></div>
     <div class="card"><div class="label">ส่งปกติ</div><div class="val" id="cNormal">—</div></div>
@@ -303,12 +301,11 @@ function render(){
   const orders = new Map();
   rows.forEach(r=>{
     if(!orders.has(r.orderRef)){
-      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, station:new Set(), shipped:true});
+      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, station:new Set()});
     }
     const o = orders.get(r.orderRef);
     if(r.pkStatus === LATE_VALUE) o.status = 'ล่าช้า';
     else if(r.pkStatus === EARLY_VALUE && o.status !== 'ล่าช้า') o.status = 'ก่อนกำหนด';
-    if(!r.updatedOn) o.shipped = false;
     if(r.station) o.station.add(r.station);
   });
 
@@ -318,7 +315,6 @@ function render(){
   const early = orderList.filter(o=>o.status==='ก่อนกำหนด').length;
   const sameDay = total - late - early;
   const onTime = total - late;
-  const notShipped = orderList.filter(o=>!o.shipped).length;
   const urgentN = orderList.filter(o=>o.urgent==='ส่งด่วน').length;
   const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
   const walkin = orderList.filter(o=>!/shopee|tiktok|lazada/i.test(o.source||'')).length;
@@ -340,7 +336,6 @@ function render(){
   document.getElementById('cPlatform').textContent = platform.toLocaleString();
   document.getElementById('cWalkin').textContent = walkin.toLocaleString();
   document.getElementById('cEarly').textContent = early.toLocaleString();
-  document.getElementById('cNotShipped').textContent = notShipped.toLocaleString();
 
   const latestRow = rows[rows.length-1];
   document.getElementById('latestLine').textContent = latestRow
@@ -427,8 +422,10 @@ function drawBrandPie(rows){
     </div>`).join('');
 
   const unspecifiedRefs = [...orderBrand.entries()].filter(([ref,b])=>b==='ไม่ระบุ').map(([ref])=>ref);
+  const SHOW_MAX = 30;
   document.getElementById('unspecifiedBrand').innerHTML = unspecifiedRefs.length
-    ? `Order Reference ที่ไม่ระบุ Sender Name (${unspecifiedRefs.length} ออเดอร์): ${unspecifiedRefs.join(', ')}`
+    ? `Order Reference ที่ไม่ระบุ Sender Name (${unspecifiedRefs.length.toLocaleString()} ออเดอร์): ${unspecifiedRefs.slice(0,SHOW_MAX).join(', ')}` +
+      (unspecifiedRefs.length > SHOW_MAX ? ` … และอีก ${(unspecifiedRefs.length-SHOW_MAX).toLocaleString()} รายการ` : '')
     : '';
 }
 
