@@ -34,12 +34,35 @@
   .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
   .tab b{font-size:12.5px;color:inherit;font-weight:600;}
 
-  .hero{display:flex;align-items:center;gap:40px;flex-wrap:wrap;padding:34px 0 40px;border-bottom:1px solid var(--line);margin-bottom:28px;}
-  .hero-num{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(56px,9vw,96px);line-height:.95;letter-spacing:-.02em;}
+  /* ปรับแต่งส่วน Hero ให้อยู่กึ่งกลาง และปรับขนาดตัวหนังสือ 99.9% */
+  .hero{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:16px;
+    padding:28px 0 34px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:28px;
+  }
+  .hero-num{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(40px, 6vw, 56px); /* ปรับขนาดเล็กลงพอดี ไม่ขยายใหญ่เกินไป */
+    line-height:1;
+    letter-spacing:-.02em;
+  }
   #pctVal{font-family:'Fraunces',serif;}
-  .hero-side{flex:1;min-width:220px;}
-  .hero-cap{color:var(--muted);font-size:13px;margin-bottom:14px;}
-  .track{position:relative;height:6px;border-radius:4px;background:var(--line);max-width:420px;}
+  .hero-side{
+    width:100%;
+    max-width:480px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .hero-cap{color:var(--muted);font-size:13px;margin-bottom:12px;}
+  .track{position:relative;height:6px;border-radius:4px;background:var(--line);width:100%;}
   .track-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:var(--matcha);}
   .track-target{position:absolute;top:-3px;width:2px;height:12px;background:var(--alert);}
   .track-target-label{position:absolute;top:10px;font-size:10.5px;color:var(--alert);font-family:'IBM Plex Mono',monospace;transform:translateX(-50%);}
@@ -63,7 +86,6 @@
   .chart-card h2{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px;font-weight:600;}
   .chart-card .cap{font-size:12px;color:var(--muted);margin-bottom:18px;}
   
-  /* ปรับแต่งการแสดงผลข้อความใน SVG */
   svg text{font-family:'IBM Plex Mono',monospace;font-size:13px;fill:var(--muted);}
   svg text.wk-val{fill:var(--matcha-deep);font-size:15px;font-weight:700;}
 
@@ -126,6 +148,7 @@
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
+  <!-- ส่วน Hero จัดกึ่งกลาง พร้อมตัวเลขขนาดกำลังดี -->
   <div class="hero">
     <div class="hero-num" id="pctVal">—</div>
     <div class="hero-side">
@@ -160,7 +183,6 @@
   <div class="chart-card">
     <h2>Weekly Order Volume</h2>
     <div class="cap">Unique orders per week</div>
-    <!-- กำหนดความสูง SVG ให้สั้นและแคบลงตามรูปตัวอย่างพอดี (height = 55) -->
     <svg id="weekChart" viewBox="0 0 1140 55" width="100%" height="55"></svg>
   </div>
 
@@ -529,7 +551,6 @@ function drawFooterStats(orders, lineItems, late){
     `COUNTUNIQUE(Order Reference) = ${orders.toLocaleString()} จาก ${lineItems.toLocaleString()} line items · ล่าช้า (แพ็ค) = ${late.toLocaleString()} ออเดอร์ · อัปเดตล่าสุด ${new Date().toLocaleString('th-TH')}`;
 }
 
-// ปรับแต่งการคำนวณตำแหน่งระยะห่างและแนวตั้ง ให้ตรงตามตัวอย่างในรูปภาพเป๊ะๆ
 function drawWeekly(orderList){
   const byWeek = {};
   orderList.forEach(o=>{ if(o.week) byWeek[o.week] = (byWeek[o.week]||0) + 1; });
