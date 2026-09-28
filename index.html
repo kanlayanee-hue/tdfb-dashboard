@@ -196,9 +196,12 @@
 
   <div class="chart-card">
     <h2>Order Detail</h2>
-    <div class="cap">แสดงเฉพาะรายการที่ "แพ็คล่าช้า" (ล่าสุด 15 รายการ)</div>
+    <div class="cap" id="detailCap">แสดงรายการ "แพ็คล่าช้า"</div>
+    <div class="filters" style="margin-bottom:14px;">
+      <div><label>เลือก Week</label><select id="dWeek"><option value="">ทุก Week</option></select></div>
+    </div>
     <div class="table-wrap2"><table id="detailTable">
-      <thead><tr><th>Order Ref</th><th>Source</th><th>Product</th><th>Status</th><th>Remark</th></tr></thead>
+      <thead><tr><th>Week</th><th>Order Ref</th><th>Source</th><th>Product</th><th>วันที่ต้องส่ง</th><th>วันที่แพ็คเสร็จ</th><th>Status</th><th>Remark</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>
@@ -217,6 +220,7 @@ const EARLY_VALUE = "แพ็คเสร็จก่อนวันจัด�
 const LATE_VALUE = "แพ็คล่าช้า";
 
 let ALL_ROWS = [];
+let LAST_ROWS = [];
 
 function loadSheet(){
   document.getElementById('errBox').style.display = 'none';
@@ -252,11 +256,18 @@ function parseRows(json){
   ALL_ROWS = rows.map(r=>{
     const c = r.c;
     const v = i => c[i] ? (c[i].f || c[i].v) : "";
+    const dt = i => {
+      const cell = c[i];
+      if(!cell || cell.v == null) return 0;
+      const m = String(cell.v).match(/Date\((\d+),(\d+),(\d+)/);
+      return m ? new Date(+m[1], +m[2], +m[3]).getTime() : 0;
+    };
     return {
       year:v(0), month:v(1), week:String(v(2)), orderRef:String(v(3)),
       created:v(4), expected:v(5), product:v(6), qty:v(7),
       salesperson:v(8), sender:v(9), source:v(10), urgent:v(11),
-      pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15), remark:v(16)
+      pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15), remark:v(16),
+      expectedTs:dt(5), packedTs:dt(13)
     };
   }).filter(r=>r.orderRef);
   populateFilterOptions();
@@ -286,6 +297,7 @@ function clearFilters(){
 });
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('fSearch').addEventListener('input', render);
+  document.getElementById('dWeek').addEventListener('change', ()=>drawDetailTable(LAST_ROWS));
 });
 
 function render(){
@@ -352,6 +364,8 @@ function render(){
   drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN);
   drawBrandPie(rows);
   drawTopProducts(rows);
+  LAST_ROWS = rows;
+  populateDetailWeeks(rows);
   drawDetailTable(rows);
   drawFooterStats(total, rows.length, late);
 }
@@ -445,12 +459,29 @@ function drawTopProducts(rows){
     : `<div style="color:var(--muted);font-size:13px;">ไม่พบข้อมูลสินค้าตามตัวกรองที่เลือก</div>`;
 }
 
+function populateDetailWeeks(rows){
+  const sel = document.getElementById('dWeek');
+  const cur = sel.value;
+  const cnt = {};
+  rows.filter(r=>r.pkStatus === LATE_VALUE).forEach(r=>{ if(r.week) cnt[r.week] = (cnt[r.week]||0) + 1; });
+  const wks = Object.keys(cnt).sort((a,b)=>Number(a)-Number(b));
+  sel.innerHTML = '<option value="">ทุก Week</option>' + wks.map(w=>`<option value="${w}">W${w} (${cnt[w]})</option>`).join('');
+  sel.value = wks.includes(cur) ? cur : '';
+}
+
 function drawDetailTable(rows){
-  const late = rows.filter(r=>r.pkStatus === LATE_VALUE).slice(-15).reverse();
+  const wk = document.getElementById('dWeek').value;
+  let late = rows.filter(r=>r.pkStatus === LATE_VALUE && (!wk || r.week === wk));
+  late.sort((a,b)=> (b.packedTs||b.expectedTs) - (a.packedTs||a.expectedTs));
+  const MAX = 300;
+  const shown = late.slice(0, MAX);
+  document.getElementById('detailCap').textContent =
+    `แสดงรายการ "แพ็คล่าช้า" ${wk ? 'ของ Week '+wk : 'ทุก Week'} · ${late.length.toLocaleString()} รายการ` +
+    (late.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
   const tbody = document.querySelector('#detailTable tbody');
-  tbody.innerHTML = late.length ? late.map(r=>`
-    <tr><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td class="late">${r.pkStatus}</td><td>${r.remark||'—'}</td></tr>
-  `).join('') : `<tr><td colspan="5" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
+  tbody.innerHTML = shown.length ? shown.map(r=>`
+    <tr><td>W${r.week}</td><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td>${r.expected||'—'}</td><td>${r.updatedOn||'—'}</td><td class="late">${r.pkStatus}</td><td>${r.remark||'—'}</td></tr>
+  `).join('') : `<tr><td colspan="8" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
 }
 
 function drawFooterStats(orders, lineItems, late){
