@@ -161,7 +161,7 @@
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
-  <!-- 2. ย้าย Filters มาไว้ใต้ On-Time Performance Target >= 98% -->
+  <!-- 2. Filters อยู่ใต้ On-Time Performance Target >= 98% -->
   <div class="filters">
     <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
     <div><label>Week</label><select id="fWeek"><option value="">All</option></select></div>
@@ -171,10 +171,10 @@
     <div class="fbtn" onclick="clearFilters()">Clear filters</div>
   </div>
 
-  <!-- 3. เพิ่มคำว่า KPI On-Time Performance ไว้ใต้เมนู/ตัวกรอง -->
+  <!-- 3. KPI On-Time Performance -->
   <div class="section-kpi-title">KPI On-Time Performance</div>
 
-  <!-- 4. ส่วนแสดงผล % Hero -->
+  <!-- 4. ส่วนแสดงผล % Hero (ปรับเป็ นทศนิยม 2 ตำแหน่ง) -->
   <div class="hero">
     <div class="hero-num" id="pctVal">—</div>
     <div class="hero-side">
@@ -396,7 +396,9 @@ function render(){
   const pct = total ? (onTime/total*100) : 0;
   document.getElementById('donut').style.setProperty('--pct', pct.toFixed(2));
   document.getElementById('trackFill').style.width = Math.min(pct,100).toFixed(2)+'%';
-  document.getElementById('pctVal').textContent = total ? pct.toFixed(1)+'%' : '—';
+  
+  // ปรับการแสดงผลเปอร์เซ็นต์ส่วนนี้เป็นทศนิยม 2 ตำแหน่ง
+  document.getElementById('pctVal').textContent = total ? pct.toFixed(2)+'%' : '—';
 
   document.getElementById('cOrders').textContent = total.toLocaleString();
   document.getElementById('cOnTime').textContent = onTime.toLocaleString();
@@ -453,7 +455,7 @@ function drawPercentChart(elId, items, targetPct){
     const y = padT + chartH - bh;
     bars += `
       <rect x="${(cx-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bh.toFixed(1)}" rx="3" fill="${it[2]}"></rect>
-      <text class="pbar-val" x="${cx}" y="${(y-6).toFixed(1)}" text-anchor="middle">${pct.toFixed(pct<1?2:1)}%</text>
+      <text class="pbar-val" x="${cx}" y="${(y-6).toFixed(1)}" text-anchor="middle">${pct.toFixed(2)}%</text>
       <text class="pbar-label" x="${cx}" y="${H-8}" text-anchor="middle">${it[0]}</text>`;
   });
   let target = '';
@@ -492,7 +494,7 @@ function drawBrandPie(rows){
   document.getElementById('brandLegend').innerHTML = entries.map(([name,n])=>`
     <div class="legend-item">
       <span class="legend-dot" style="background:${colors[name]}"></span>
-      ${name} <span class="lv">${(n/total*100).toFixed(1)}% · ${n.toLocaleString()} orders</span>
+      ${name} <span class="lv">${(n/total*100).toFixed(2)}% · ${n.toLocaleString()} orders</span>
     </div>`).join('');
 
   const unspecifiedRefs = [...orderBrand.entries()].filter(([ref,b])=>b==='ไม่ระบุ').map(([ref])=>ref);
