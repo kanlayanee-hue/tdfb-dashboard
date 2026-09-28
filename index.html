@@ -221,15 +221,21 @@ let ALL_ROWS = [];
 function loadSheet(){
   document.getElementById('errBox').style.display = 'none';
   document.getElementById('latestLine').textContent = 'กำลังโหลดข้อมูล…';
+  if(window._loadTimer) clearTimeout(window._loadTimer);
   window.google = window.google || {};
   window.google.visualization = window.google.visualization || {};
   window.google.visualization.Query = {
     setResponse: function(json){
-      try{ parseRows(json); }catch(e){ showErr(); }
-      loaded = true;
+      clearTimeout(window._loadTimer);
+      try{
+        parseRows(json);
+        document.getElementById('errBox').style.display = 'none';
+      }catch(e){
+        console.error(e);
+        showErr();
+      }
     }
   };
-  let loaded = false;
   const s = document.createElement('script');
   s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
   s.onerror = showErr;
@@ -237,7 +243,7 @@ function loadSheet(){
   const old = document.getElementById('gvizScript');
   if(old) old.remove();
   document.body.appendChild(s);
-  setTimeout(()=>{ if(!loaded) showErr(); }, 8000);
+  window._loadTimer = setTimeout(showErr, 60000);
 }
 function showErr(){ document.getElementById('errBox').style.display='block'; document.getElementById('latestLine').textContent=''; }
 
