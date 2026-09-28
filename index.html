@@ -174,7 +174,7 @@
   <!-- 3. KPI On-Time Performance -->
   <div class="section-kpi-title">KPI On-Time Performance</div>
 
-  <!-- 4. ส่วนแสดงผล % Hero (ปรับเป็ นทศนิยม 2 ตำแหน่ง) -->
+  <!-- 4. ส่วนแสดงผล % Hero (ทศนิยม 2 ตำแหน่ง) -->
   <div class="hero">
     <div class="hero-num" id="pctVal">—</div>
     <div class="hero-side">
@@ -397,7 +397,6 @@ function render(){
   document.getElementById('donut').style.setProperty('--pct', pct.toFixed(2));
   document.getElementById('trackFill').style.width = Math.min(pct,100).toFixed(2)+'%';
   
-  // ปรับการแสดงผลเปอร์เซ็นต์ส่วนนี้เป็นทศนิยม 2 ตำแหน่ง
   document.getElementById('pctVal').textContent = total ? pct.toFixed(2)+'%' : '—';
 
   document.getElementById('cOrders').textContent = total.toLocaleString();
@@ -535,32 +534,44 @@ function populateDetailWeeks(rows){
   }
 }
 
+/* === ฟังก์ชัน drawDetailTable แสดงผล 1 แถวต่อ 1 Order Ref === */
 function drawDetailTable(rows){
   const topWk = document.getElementById('fWeek').value;
   const tableWk = document.getElementById('dWeek').value;
   const activeWk = tableWk || topWk;
 
-  let late = rows.filter(r=>r.pkStatus === LATE_VALUE && (!activeWk || r.week === activeWk));
-  late.sort((a,b)=> (b.packedTs||b.expectedTs) - (a.packedTs||a.expectedTs));
+  let lateRows = rows.filter(r => r.pkStatus === LATE_VALUE && (!activeWk || r.week === activeWk));
+
+  const seenOrderRef = new Set();
+  const uniqueLateRows = [];
+
+  lateRows.forEach(r => {
+    if (!seenOrderRef.has(r.orderRef)) {
+      seenOrderRef.add(r.orderRef);
+      uniqueLateRows.push(r);
+    }
+  });
+
+  uniqueLateRows.sort((a,b) => (b.packedTs || b.expectedTs) - (a.packedTs || a.expectedTs));
   
   const MAX = 300;
-  const shown = late.slice(0, MAX);
+  const shown = uniqueLateRows.slice(0, MAX);
   
   document.getElementById('detailCap').textContent =
-    `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${late.length.toLocaleString()} รายการ` +
-    (late.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
+    `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${uniqueLateRows.length.toLocaleString()} ออเดอร์` +
+    (uniqueLateRows.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
     
   const tbody = document.querySelector('#detailTable tbody');
-  tbody.innerHTML = shown.length ? shown.map(r=>`
+  tbody.innerHTML = shown.length ? shown.map(r => `
     <tr>
       <td>W${r.week}</td>
       <td>${r.orderRef}</td>
       <td>${r.source}</td>
-      <td>${r.product}</td>
-      <td>${r.expected||'—'}</td>
-      <td>${r.updatedOn||'—'}</td>
+      <td>${r.product || '—'}</td>
+      <td>${r.expected || '—'}</td>
+      <td>${r.updatedOn || '—'}</td>
       <td class="late">${r.pkStatus}</td>
-      <td>${r.remark||'—'}</td>
+      <td>${r.remark || '—'}</td>
     </tr>
   `).join('') : `<tr><td colspan="8" style="color:var(--muted);text-align:center;">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
 }
