@@ -161,7 +161,7 @@
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
-  <!-- 2. Filters อยู่ใต้ On-Time Performance Target >= 98% -->
+  <!-- 2. Filters -->
   <div class="filters">
     <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
     <div><label>Week</label><select id="fWeek"><option value="">All</option></select></div>
@@ -514,7 +514,6 @@ function drawTopProducts(rows){
     : `<div style="color:var(--muted);font-size:13px;">ไม่พบข้อมูลสินค้าตามตัวกรองที่เลือก</div>`;
 }
 
-/* 1. populateDetailWeeks: นับจำนวน Order Reference แบบ Unique เพื่อแสดงออเดอร์ใน Dropdown เช่น W39 (3) */
 function populateDetailWeeks(rows){
   const sel = document.getElementById('dWeek');
   const cur = sel.value;
@@ -543,42 +542,52 @@ function populateDetailWeeks(rows){
   }
 }
 
-/* 2. drawDetailTable: นับจำนวนออเดอร์ (3 ออเดอร์) มาโชว์หัวข้อ แต่แสดงครบทุกรายการสินค้า (6 บรรทัด) ในตาราง */
+/* drawDetailTable: แสดง ORDER REF แค่บรรทัดแรกของแต่ละออเดอร์ แต่แสดงสินค้าครบทุกบรรทัด */
 function drawDetailTable(rows){
   const topWk = document.getElementById('fWeek').value;
   const tableWk = document.getElementById('dWeek').value;
   const activeWk = tableWk || topWk;
 
-  // กรองทุกรายการสินค้าที่ล่าช้า
+  // 1. กรองเฉพาะรายการสินค้าที่ล่าช้า
   let lateRows = rows.filter(r => r.pkStatus === LATE_VALUE && (!activeWk || r.week === activeWk));
 
-  // นับจำนวน Order Reference ที่ไม่ซ้ำกัน
+  // 2. นับจำนวนออเดอร์ที่ไม่ซ้ำกัน
   const uniqueOrderCount = new Set(lateRows.map(r => r.orderRef)).size;
 
-  // เรียงลำดับตามวันที่แพ็คเสร็จล่าสุด
+  // 3. เรียงลำดับตามวันที่แพ็คเสร็จล่าสุด
   lateRows.sort((a,b) => (b.packedTs || b.expectedTs) - (a.packedTs || a.expectedTs));
   
   const MAX = 300;
   const shown = lateRows.slice(0, MAX);
   
-  // ระบุจำนวนออเดอร์และรายการสินค้าในหัวข้อ
+  // ปรับข้อความหัวตาราง
   document.getElementById('detailCap').textContent =
     `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${uniqueOrderCount.toLocaleString()} ออเดอร์ (${lateRows.length.toLocaleString()} รายการ)` +
     (lateRows.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
     
+  // 4. วาดตารางโดยซ่อน WEEK, ORDER REF, SOURCE ในบรรทัดถัดไปของออเดอร์เดิม
   const tbody = document.querySelector('#detailTable tbody');
-  tbody.innerHTML = shown.length ? shown.map(r => `
-    <tr>
-      <td>W${r.week}</td>
-      <td>${r.orderRef}</td>
-      <td>${r.source}</td>
-      <td>${r.product || '—'}</td>
-      <td>${r.expected || '—'}</td>
-      <td>${r.updatedOn || '—'}</td>
-      <td class="late">${r.pkStatus}</td>
-      <td>${r.remark || '—'}</td>
-    </tr>
-  `).join('') : `<tr><td colspan="8" style="color:var(--muted);text-align:center;">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
+  const seenOrders = new Set();
+
+  tbody.innerHTML = shown.length ? shown.map(r => {
+    const isFirstRowOfOrder = !seenOrders.has(r.orderRef);
+    if (isFirstRowOfOrder) {
+      seenOrders.add(r.orderRef);
+    }
+
+    return `
+      <tr style="${isFirstRowOfOrder ? 'border-top:1.5px solid var(--line);' : 'border-top:none;'}">
+        <td>${isFirstRowOfOrder ? 'W' + r.week : ''}</td>
+        <td style="font-weight:${isFirstRowOfOrder ? '600' : 'normal'}">${isFirstRowOfOrder ? r.orderRef : ''}</td>
+        <td>${isFirstRowOfOrder ? r.source : ''}</td>
+        <td>${r.product || '—'}</td>
+        <td>${r.expected || '—'}</td>
+        <td>${r.updatedOn || '—'}</td>
+        <td class="late">${r.pkStatus}</td>
+        <td>${r.remark || '—'}</td>
+      </tr>
+    `;
+  }).join('') : `<tr><td colspan="8" style="color:var(--muted);text-align:center;">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
 }
 
 function drawFooterStats(orders, lineItems, late){
