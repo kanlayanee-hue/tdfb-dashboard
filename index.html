@@ -62,8 +62,11 @@
   .chart-card{background:var(--panel);padding:28px 0;margin-top:0;border-bottom:1px solid var(--line);}
   .chart-card h2{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px;font-weight:600;}
   .chart-card .cap{font-size:12px;color:var(--muted);margin-bottom:18px;}
-  svg text{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:var(--muted);}
-  svg text.wk-val{fill:var(--matcha-deep);font-size:11px;font-weight:700;}
+  
+  /* ปรับขนาดตัวหนังสือสำหรับ SVG ทั้งหมด */
+  svg text{font-family:'IBM Plex Mono',monospace;font-size:13px;fill:var(--muted);}
+  svg text.wk-val{fill:var(--matcha-deep);font-size:15px;font-weight:700;}
+
   .pbar-grid{stroke:var(--line);stroke-width:1;}
   .pbar-axis{fill:var(--muted);font-size:9px;font-family:'IBM Plex Mono',monospace;}
   .pbar-label{fill:var(--ink);font-size:10.5px;}
@@ -157,7 +160,8 @@
   <div class="chart-card">
     <h2>Weekly Order Volume</h2>
     <div class="cap">Unique orders per week</div>
-    <svg id="weekChart" viewBox="0 0 1140 220" width="100%" height="220"></svg>
+    <!-- ปรับลดความสูงกราฟลงเหลือ 120px -->
+    <svg id="weekChart" viewBox="0 0 1140 120" width="100%" height="120"></svg>
   </div>
 
   <div class="mini-grid">
@@ -525,31 +529,38 @@ function drawFooterStats(orders, lineItems, late){
     `COUNTUNIQUE(Order Reference) = ${orders.toLocaleString()} จาก ${lineItems.toLocaleString()} line items · ล่าช้า (แพ็ค) = ${late.toLocaleString()} ออเดอร์ · อัปเดตล่าสุด ${new Date().toLocaleString('th-TH')}`;
 }
 
+// ปรับฟังก์ชั่นวาดกราฟเส้นสัปดาห์ให้เหมาะกับความสูง 120px และตัวหนังสือใหญ่ขึ้น
 function drawWeekly(orderList){
   const byWeek = {};
   orderList.forEach(o=>{ if(o.week) byWeek[o.week] = (byWeek[o.week]||0) + 1; });
   const weeks = Object.keys(byWeek).sort((a,b)=>Number(a)-Number(b));
   const svg = document.getElementById('weekChart');
   if(!weeks.length){ svg.innerHTML=''; return; }
+
   const max = Math.max(...weeks.map(w=>byWeek[w]), 1);
-  const W=1140,H=220,pad=30,padTop=44;
-  const step = (W-2*pad)/Math.max(weeks.length-1,1);
-  const pts = weeks.map((w,i)=>{
-    const x = pad + i*step;
-    const y = padTop + (1-byWeek[w]/max)*(H-pad-padTop);
-    return [x,y];
+  const W = 1140, H = 120, pad = 30, padTop = 32;
+  const step = (W - 2 * pad) / Math.max(weeks.length - 1, 1);
+  
+  const pts = weeks.map((w, i) => {
+    const x = pad + i * step;
+    const y = padTop + (1 - byWeek[w] / max) * (H - pad - padTop);
+    return [x, y];
   });
-  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-  const area = path + ` L${pts[pts.length-1][0].toFixed(1)},${H-pad} L${pts[0][0].toFixed(1)},${H-pad} Z`;
+  
+  const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const area = path + ` L${pts[pts.length - 1][0].toFixed(1)},${H - pad} L${pts[0][0].toFixed(1)},${H - pad} Z`;
+  
   let labels = '';
-  weeks.forEach((w,i)=>{
-    if(i%2===0) labels += `<text x="${pts[i][0]}" y="${H-8}" text-anchor="middle">W${w}</text>`;
+  weeks.forEach((w, i) => {
+    if(i % 2 === 0) labels += `<text x="${pts[i][0]}" y="${H - 5}" text-anchor="middle" font-weight="600">W${w}</text>`;
   });
-  let valueLabels = pts.map((p,i)=>`<text class="wk-val" x="${p[0]}" y="${p[1]-8}" text-anchor="middle">${byWeek[weeks[i]]}</text>`).join('');
+  
+  let valueLabels = pts.map((p, i) => `<text class="wk-val" x="${p[0]}" y="${p[1] - 8}" text-anchor="middle">${byWeek[weeks[i]]}</text>`).join('');
+  
   svg.innerHTML = `
     <path d="${area}" fill="#5C7A3A22" stroke="none"></path>
-    <path d="${path}" fill="none" stroke="#5C7A3A" stroke-width="2"></path>
-    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#3E5527"></circle>`).join('')}
+    <path d="${path}" fill="none" stroke="#5C7A3A" stroke-width="2.5"></path>
+    ${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#3E5527"></circle>`).join('')}
     ${valueLabels}
     ${labels}`;
 }
