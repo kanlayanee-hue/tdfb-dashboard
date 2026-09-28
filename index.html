@@ -29,12 +29,30 @@
   button.refresh{background:var(--ink);color:#fff;border:none;border-radius:100px;padding:8px 18px;font-weight:600;font-size:12px;cursor:pointer;letter-spacing:.03em;}
   button.refresh:hover{background:var(--matcha-deep);}
   .latest{color:var(--muted);font-size:12.5px;margin-bottom:22px;font-family:'IBM Plex Mono',monospace;}
-  .tabs{display:flex;gap:8px;margin-bottom:32px;flex-wrap:wrap;}
+  .tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
   .tab{background:transparent;border:1px solid var(--line);border-radius:100px;padding:9px 18px;font-size:12.5px;color:var(--muted);cursor:default;}
   .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
   .tab b{font-size:12.5px;color:inherit;font-weight:600;}
 
-  /* ปรับแต่งส่วน Hero ให้อยู่กึ่งกลาง และปรับขนาดตัวหนังสือ 99.9% */
+  /* Filters Style */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:28px;}
+  .filters > div{padding:0;}
+  .filters label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
+  .filters select,.filters input{font-family:'Noto Sans Thai',sans-serif;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:106px;}
+  .filters .fbtn{align-self:flex-end;background:transparent;border:none;border-bottom:1px solid var(--ink);padding:8px 0;font-size:12.5px;cursor:pointer;color:var(--ink);}
+
+  /* Title หัวข้อใต้เมนู/ตัวกรอง */
+  .section-kpi-title{
+    text-align:center;
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:600;
+    color:var(--ink);
+    margin:20px 0 10px;
+    letter-spacing:-.01em;
+  }
+
+  /* Hero Section */
   .hero{
     display:flex;
     flex-direction:column;
@@ -42,14 +60,14 @@
     justify-content:center;
     text-align:center;
     gap:16px;
-    padding:28px 0 34px;
+    padding:10px 0 34px;
     border-bottom:1px solid var(--line);
     margin-bottom:28px;
   }
   .hero-num{
     font-family:'Fraunces',serif;
     font-weight:600;
-    font-size:clamp(40px, 6vw, 56px); /* ปรับขนาดเล็กลงพอดี ไม่ขยายใหญ่เกินไป */
+    font-size:clamp(40px, 6vw, 56px);
     line-height:1;
     letter-spacing:-.02em;
   }
@@ -67,12 +85,6 @@
   .track-target{position:absolute;top:-3px;width:2px;height:12px;background:var(--alert);}
   .track-target-label{position:absolute;top:10px;font-size:10.5px;color:var(--alert);font-family:'IBM Plex Mono',monospace;transform:translateX(-50%);}
   .donut{display:none;}
-
-  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:24px;}
-  .filters > div{padding:0;}
-  .filters label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
-  .filters select,.filters input{font-family:'Noto Sans Thai',sans-serif;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:106px;}
-  .filters .fbtn{align-self:flex-end;background:transparent;border:none;border-bottom:1px solid var(--ink);padding:8px 0;font-size:12.5px;cursor:pointer;color:var(--ink);}
 
   .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
   @media (max-width:900px){.cards{grid-template-columns:repeat(2,1fr);}}
@@ -143,21 +155,13 @@
   <div class="err" id="errBox">โหลดข้อมูลจาก Google Sheet ไม่สำเร็จ — ตรวจสอบว่าชีทแชร์แบบ "Anyone with the link can view" แล้วลอง Refresh อีกครั้ง</div>
   <div class="latest" id="latestLine">กำลังโหลดข้อมูล…</div>
 
+  <!-- 1. แถบ Tabs -->
   <div class="tabs">
     <div class="tab active"><b>On-Time Performance</b>Target ≥ 98%</div>
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
-  <!-- ส่วน Hero จัดกึ่งกลาง พร้อมตัวเลขขนาดกำลังดี -->
-  <div class="hero">
-    <div class="hero-num" id="pctVal">—</div>
-    <div class="hero-side">
-      <div class="hero-cap">PACKED ON TIME · เป้าหมาย ≥ 98%</div>
-      <div class="track"><div class="track-fill" id="trackFill" style="width:0%"></div><div class="track-target" style="left:98%"></div><div class="track-target-label" style="left:98%">98%</div></div>
-    </div>
-    <div class="donut" id="donut" style="--pct:0"></div>
-  </div>
-
+  <!-- 2. ย้าย Filters มาไว้ใต้ On-Time Performance Target >= 98% -->
   <div class="filters">
     <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
     <div><label>Week</label><select id="fWeek"><option value="">All</option></select></div>
@@ -165,6 +169,19 @@
     <div><label>Channel</label><select id="fSource"><option value="">All</option></select></div>
     <div><label>Order Reference</label><input id="fSearch" placeholder="Search order…"></div>
     <div class="fbtn" onclick="clearFilters()">Clear filters</div>
+  </div>
+
+  <!-- 3. เพิ่มคำว่า KPI On-Time Performance ไว้ใต้เมนู/ตัวกรอง -->
+  <div class="section-kpi-title">KPI On-Time Performance</div>
+
+  <!-- 4. ส่วนแสดงผล % Hero -->
+  <div class="hero">
+    <div class="hero-num" id="pctVal">—</div>
+    <div class="hero-side">
+      <div class="hero-cap">PACKED ON TIME · เป้าหมาย ≥ 98%</div>
+      <div class="track"><div class="track-fill" id="trackFill" style="width:0%"></div><div class="track-target" style="left:98%"></div><div class="track-target-label" style="left:98%">98%</div></div>
+    </div>
+    <div class="donut" id="donut" style="--pct:0"></div>
   </div>
 
   <div class="cards">
