@@ -288,13 +288,25 @@ function populateFilterOptions(){
 function clearFilters(){
   ['fMonth','fWeek','fUrgent','fSource'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fSearch').value='';
+  document.getElementById('dWeek').value='';
   render();
 }
+
 ['fMonth','fWeek','fUrgent','fSource'].forEach(id=>{
   document.addEventListener('DOMContentLoaded',()=>{
-    document.getElementById(id).addEventListener('change', render);
+    document.getElementById(id).addEventListener('change', () => {
+      if (id === 'fWeek') {
+        const selectedWeek = document.getElementById('fWeek').value;
+        const dWeekSel = document.getElementById('dWeek');
+        if (dWeekSel) {
+          dWeekSel.value = selectedWeek;
+        }
+      }
+      render();
+    });
   });
 });
+
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('fSearch').addEventListener('input', render);
   document.getElementById('dWeek').addEventListener('change', ()=>drawDetailTable(LAST_ROWS));
@@ -337,9 +349,6 @@ function render(){
   const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
   const walkin = orderList.filter(o=>!/shopee|tiktok|lazada/i.test(o.source||'')).length;
   const platform = total - walkin;
-  const skuCount = new Set(rows.map(r=>r.product)).size;
-  const stationSet = new Set(rows.map(r=>r.station).filter(Boolean));
-  const sourceSet = new Set(orderList.map(o=>o.source).filter(Boolean));
 
   const pct = total ? (onTime/total*100) : 0;
   document.getElementById('donut').style.setProperty('--pct', pct.toFixed(2));
@@ -378,6 +387,7 @@ function barsHTML(items, max){
       <div class="bv">${it[1].toLocaleString()}</div>
     </div>`).join('');
 }
+
 function drawPercentChart(elId, items, targetPct){
   const svg = document.getElementById(elId);
   const total = items.reduce((s,it)=>s+it[1],0) || 1;
@@ -411,6 +421,7 @@ function drawPercentChart(elId, items, targetPct){
   }
   svg.innerHTML = grid + bars + target;
 }
+
 function drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN){
   drawPercentChart('barOnTime', [['ตรงเวลา',sameDay+early,'#5C7A3A'],['ล่าช้า',late,'#B9502F']], 98);
   drawPercentChart('barPlatform', [['Platform',platform,'#5C7A3A'],['Walk-in',walkin,'#C79A3E']], null);
@@ -462,26 +473,51 @@ function drawTopProducts(rows){
 function populateDetailWeeks(rows){
   const sel = document.getElementById('dWeek');
   const cur = sel.value;
+  const fWeek = document.getElementById('fWeek').value;
+  
   const cnt = {};
   rows.filter(r=>r.pkStatus === LATE_VALUE).forEach(r=>{ if(r.week) cnt[r.week] = (cnt[r.week]||0) + 1; });
   const wks = Object.keys(cnt).sort((a,b)=>Number(a)-Number(b));
+  
   sel.innerHTML = '<option value="">ทุก Week</option>' + wks.map(w=>`<option value="${w}">W${w} (${cnt[w]})</option>`).join('');
-  sel.value = wks.includes(cur) ? cur : '';
+  
+  if (fWeek && wks.includes(fWeek)) {
+    sel.value = fWeek;
+  } else if (wks.includes(cur)) {
+    sel.value = cur;
+  } else {
+    sel.value = '';
+  }
 }
 
 function drawDetailTable(rows){
-  const wk = document.getElementById('dWeek').value;
-  let late = rows.filter(r=>r.pkStatus === LATE_VALUE && (!wk || r.week === wk));
+  const topWk = document.getElementById('fWeek').value;
+  const tableWk = document.getElementById('dWeek').value;
+  const activeWk = tableWk || topWk;
+
+  let late = rows.filter(r=>r.pkStatus === LATE_VALUE && (!activeWk || r.week === activeWk));
   late.sort((a,b)=> (b.packedTs||b.expectedTs) - (a.packedTs||a.expectedTs));
+  
   const MAX = 300;
   const shown = late.slice(0, MAX);
+  
   document.getElementById('detailCap').textContent =
-    `แสดงรายการ "แพ็คล่าช้า" ${wk ? 'ของ Week '+wk : 'ทุก Week'} · ${late.length.toLocaleString()} รายการ` +
+    `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${late.length.toLocaleString()} รายการ` +
     (late.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
+    
   const tbody = document.querySelector('#detailTable tbody');
   tbody.innerHTML = shown.length ? shown.map(r=>`
-    <tr><td>W${r.week}</td><td>${r.orderRef}</td><td>${r.source}</td><td>${r.product}</td><td>${r.expected||'—'}</td><td>${r.updatedOn||'—'}</td><td class="late">${r.pkStatus}</td><td>${r.remark||'—'}</td></tr>
-  `).join('') : `<tr><td colspan="8" style="color:var(--muted);">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
+    <tr>
+      <td>W${r.week}</td>
+      <td>${r.orderRef}</td>
+      <td>${r.source}</td>
+      <td>${r.product}</td>
+      <td>${r.expected||'—'}</td>
+      <td>${r.updatedOn||'—'}</td>
+      <td class="late">${r.pkStatus}</td>
+      <td>${r.remark||'—'}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="8" style="color:var(--muted);text-align:center;">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
 }
 
 function drawFooterStats(orders, lineItems, late){
