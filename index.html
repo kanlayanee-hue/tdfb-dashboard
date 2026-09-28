@@ -241,10 +241,10 @@
     <h2>Order Detail</h2>
     <div class="cap" id="detailCap">แสดงรายการ "แพ็คล่าช้า"</div>
     <div class="filters" style="margin-bottom:14px;">
-      <div><label>เลือก Week</label><select id="dWeek"><option value="">ทุก Week</option></select></div>
+      <div><label>เลือก WEEK</label><select id="dWeek"><option value="">ทุก Week</option></select></div>
     </div>
     <div class="table-wrap2"><table id="detailTable">
-      <thead><tr><th>Week</th><th>Order Ref</th><th>Source</th><th>Product</th><th>วันที่ต้องส่ง</th><th>วันที่แพ็คเสร็จ</th><th>Status</th><th>Remark</th></tr></thead>
+      <thead><tr><th>WEEK</th><th>ORDER REF</th><th>SOURCE</th><th>PRODUCT</th><th>วันที่ต้องส่ง</th><th>วันที่แพ็คเสร็จ</th><th>STATUS</th><th>REMARK</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>
@@ -514,16 +514,25 @@ function drawTopProducts(rows){
     : `<div style="color:var(--muted);font-size:13px;">ไม่พบข้อมูลสินค้าตามตัวกรองที่เลือก</div>`;
 }
 
+/* 1. populateDetailWeeks: นับจำนวน Order Reference แบบ Unique เพื่อแสดงออเดอร์ใน Dropdown เช่น W39 (3) */
 function populateDetailWeeks(rows){
   const sel = document.getElementById('dWeek');
   const cur = sel.value;
   const fWeek = document.getElementById('fWeek').value;
   
-  const cnt = {};
-  rows.filter(r=>r.pkStatus === LATE_VALUE).forEach(r=>{ if(r.week) cnt[r.week] = (cnt[r.week]||0) + 1; });
-  const wks = Object.keys(cnt).sort((a,b)=>Number(a)-Number(b));
+  const weekOrders = {};
+  rows.filter(r => r.pkStatus === LATE_VALUE).forEach(r => {
+    if (r.week) {
+      if (!weekOrders[r.week]) weekOrders[r.week] = new Set();
+      weekOrders[r.week].add(r.orderRef);
+    }
+  });
+
+  const wks = Object.keys(weekOrders).sort((a,b) => Number(a) - Number(b));
   
-  sel.innerHTML = '<option value="">ทุก Week</option>' + wks.map(w=>`<option value="${w}">W${w} (${cnt[w]})</option>`).join('');
+  sel.innerHTML = '<option value="">ทุก Week</option>' + wks.map(w => 
+    `<option value="${w}">W${w} (${weekOrders[w].size})</option>`
+  ).join('');
   
   if (fWeek && wks.includes(fWeek)) {
     sel.value = fWeek;
@@ -534,32 +543,28 @@ function populateDetailWeeks(rows){
   }
 }
 
-/* === ฟังก์ชัน drawDetailTable แสดงผล 1 แถวต่อ 1 Order Ref === */
+/* 2. drawDetailTable: นับจำนวนออเดอร์ (3 ออเดอร์) มาโชว์หัวข้อ แต่แสดงครบทุกรายการสินค้า (6 บรรทัด) ในตาราง */
 function drawDetailTable(rows){
   const topWk = document.getElementById('fWeek').value;
   const tableWk = document.getElementById('dWeek').value;
   const activeWk = tableWk || topWk;
 
+  // กรองทุกรายการสินค้าที่ล่าช้า
   let lateRows = rows.filter(r => r.pkStatus === LATE_VALUE && (!activeWk || r.week === activeWk));
 
-  const seenOrderRef = new Set();
-  const uniqueLateRows = [];
+  // นับจำนวน Order Reference ที่ไม่ซ้ำกัน
+  const uniqueOrderCount = new Set(lateRows.map(r => r.orderRef)).size;
 
-  lateRows.forEach(r => {
-    if (!seenOrderRef.has(r.orderRef)) {
-      seenOrderRef.add(r.orderRef);
-      uniqueLateRows.push(r);
-    }
-  });
-
-  uniqueLateRows.sort((a,b) => (b.packedTs || b.expectedTs) - (a.packedTs || a.expectedTs));
+  // เรียงลำดับตามวันที่แพ็คเสร็จล่าสุด
+  lateRows.sort((a,b) => (b.packedTs || b.expectedTs) - (a.packedTs || a.expectedTs));
   
   const MAX = 300;
-  const shown = uniqueLateRows.slice(0, MAX);
+  const shown = lateRows.slice(0, MAX);
   
+  // ระบุจำนวนออเดอร์และรายการสินค้าในหัวข้อ
   document.getElementById('detailCap').textContent =
-    `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${uniqueLateRows.length.toLocaleString()} ออเดอร์` +
-    (uniqueLateRows.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
+    `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${uniqueOrderCount.toLocaleString()} ออเดอร์ (${lateRows.length.toLocaleString()} รายการ)` +
+    (lateRows.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
     
   const tbody = document.querySelector('#detailTable tbody');
   tbody.innerHTML = shown.length ? shown.map(r => `
