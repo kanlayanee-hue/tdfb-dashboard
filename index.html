@@ -146,9 +146,11 @@
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
+  <!-- Filters Section (เพิ่ม DATE) -->
   <div class="filters">
     <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
     <div><label>Week</label><select id="fWeek"><option value="">All</option></select></div>
+    <div><label>Date</label><select id="fDate"><option value="">All</option></select></div>
     <div><label>Shipping</label><select id="fUrgent"><option value="">All</option></select></div>
     <div><label>Channel</label><select id="fSource"><option value="">All</option></select></div>
     <div><label>Order Reference</label><input id="fSearch" placeholder="Search order…"></div>
@@ -202,7 +204,7 @@
     </div>
   </div>
 
-  <!-- ส่วนแสดง Top 10 ขนส่ง พร้อมชุดสีหลากหลาย -->
+  <!-- Top 10 Couriers -->
   <div class="chart-card">
     <h2>Top 10 Couriers</h2>
     <div class="cap">ขนส่งที่ใช้งานมากที่สุด 10 อันดับแรก (นับตามจำนวนออเดอร์จาก คอลัมน์ R)</div>
@@ -279,6 +281,14 @@ function loadSheet(){
 }
 function showErr(){ document.getElementById('errBox').style.display='block'; document.getElementById('latestLine').textContent=''; }
 
+function formatDateStr(val){
+  if(!val) return '';
+  if(typeof val === 'string' && val.includes('T')) {
+    return val.split('T')[0];
+  }
+  return String(val).split(' ')[0];
+}
+
 function parseRows(json){
   const rows = json.table.rows;
   ALL_ROWS = rows.map(r=>{
@@ -290,9 +300,14 @@ function parseRows(json){
       const m = String(cell.v).match(/Date\((\d+),(\d+),(\d+)/);
       return m ? new Date(+m[1], +m[2], +m[3]).getTime() : 0;
     };
+
+    const rawCreated = v(4);
+    const rawExpected = v(5);
+    const dateStr = formatDateStr(rawCreated) || formatDateStr(rawExpected);
+
     return {
       year:v(0), month:v(1), week:String(v(2)), orderRef:String(v(3)),
-      created:v(4), expected:v(5), product:v(6), qty:v(7),
+      created:rawCreated, expected:rawExpected, dateStr:dateStr, product:v(6), qty:v(7),
       salesperson:v(8), sender:v(9), source:v(10), urgent:v(11),
       pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15), remark:v(16),
       courier:v(17),
@@ -312,17 +327,21 @@ function populateFilterOptions(){
     sel.innerHTML = '<option value="">All</option>' + vals.map(v=>`<option value="${v}">${v}</option>`).join('');
     sel.value = cur;
   };
-  fill('fMonth','month'); fill('fWeek','week'); fill('fUrgent','urgent'); fill('fSource','source');
+  fill('fMonth','month'); 
+  fill('fWeek','week'); 
+  fill('fDate','dateStr');
+  fill('fUrgent','urgent'); 
+  fill('fSource','source');
 }
 
 function clearFilters(){
-  ['fMonth','fWeek','fUrgent','fSource'].forEach(id=>document.getElementById(id).value='');
+  ['fMonth','fWeek','fDate','fUrgent','fSource'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fSearch').value='';
   document.getElementById('dWeek').value='';
   render();
 }
 
-['fMonth','fWeek','fUrgent','fSource'].forEach(id=>{
+['fMonth','fWeek','fDate','fUrgent','fSource'].forEach(id=>{
   document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById(id).addEventListener('change', () => {
       if (id === 'fWeek') {
@@ -344,6 +363,7 @@ function render(){
   if(!ALL_ROWS.length) return;
   const fMonth = document.getElementById('fMonth').value;
   const fWeek = document.getElementById('fWeek').value;
+  const fDate = document.getElementById('fDate').value;
   const fUrgent = document.getElementById('fUrgent').value;
   const fSource = document.getElementById('fSource').value;
   const fSearch = document.getElementById('fSearch').value.trim().toLowerCase();
@@ -351,6 +371,7 @@ function render(){
   const rows = ALL_ROWS.filter(r=>
     (!fMonth || r.month===fMonth) &&
     (!fWeek || r.week===fWeek) &&
+    (!fDate || r.dateStr===fDate) &&
     (!fUrgent || r.urgent===fUrgent) &&
     (!fSource || r.source===fSource) &&
     (!fSearch || r.orderRef.toLowerCase().includes(fSearch))
@@ -415,7 +436,6 @@ function barsHTML(items, max){
     </div>`).join('');
 }
 
-/* ฟังก์ชันวาด Top 10 Couriers ด้วยชุดสีหลากหลาย (Multi-color Palette) */
 function drawTopCouriersVertical(orderList){
   const counts = {};
   orderList.forEach(o=>{
@@ -433,18 +453,9 @@ function drawTopCouriersVertical(orderList){
     return;
   }
 
-  // ชุดสีสวยงามและเข้ากับธีมสำหรับขนส่งแต่ละอัน
   const colorPalette = [
-    '#C79A3E', // Gold
-    '#5C7A3A', // Matcha
-    '#3E5527', // Dark Green
-    '#B9502F', // Terracotta Red
-    '#4A7C59', // Earthy Green
-    '#D97724', // Amber Orange
-    '#2E6B9E', // Deep Blue
-    '#8B5A2B', // Warm Brown
-    '#768A5D', // Olive Green
-    '#A0522D'  // Sienna
+    '#C79A3E', '#5C7A3A', '#3E5527', '#B9502F', '#4A7C59',
+    '#D97724', '#2E6B9E', '#8B5A2B', '#768A5D', '#A0522D'
   ];
 
   const W = 920, H = 310, padL = 45, padR = 20, padT = 30, padB = 110;
