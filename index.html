@@ -15,7 +15,6 @@
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai',sans-serif;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 70px;}
-  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:2px;}
 
   header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:28px;}
   .brand{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin-bottom:10px;letter-spacing:.03em;}
@@ -36,55 +35,20 @@
 
   /* Filters Style */
   .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:28px;}
-  .filters > div{padding:0;}
   .filters label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
   .filters select,.filters input{font-family:'Noto Sans Thai',sans-serif;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:106px;}
   .filters .fbtn{align-self:flex-end;background:transparent;border:none;border-bottom:1px solid var(--ink);padding:8px 0;font-size:12.5px;cursor:pointer;color:var(--ink);}
 
-  /* Title หัวข้อใต้เมนู/ตัวกรอง */
-  .section-kpi-title{
-    text-align:center;
-    font-family:'Fraunces',serif;
-    font-size:22px;
-    font-weight:600;
-    color:var(--ink);
-    margin:20px 0 10px;
-    letter-spacing:-.01em;
-  }
+  .section-kpi-title{text-align:center;font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);margin:20px 0 10px;letter-spacing:-.01em;}
 
-  /* Hero Section */
-  .hero{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    gap:16px;
-    padding:10px 0 34px;
-    border-bottom:1px solid var(--line);
-    margin-bottom:28px;
-  }
-  .hero-num{
-    font-family:'Fraunces',serif;
-    font-weight:600;
-    font-size:clamp(40px, 6vw, 56px);
-    line-height:1;
-    letter-spacing:-.02em;
-  }
-  #pctVal{font-family:'Fraunces',serif;}
-  .hero-side{
-    width:100%;
-    max-width:480px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-  }
+  .hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:10px 0 34px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .hero-num{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(40px, 6vw, 56px);line-height:1;letter-spacing:-.02em;}
+  .hero-side{width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;}
   .hero-cap{color:var(--muted);font-size:13px;margin-bottom:12px;}
   .track{position:relative;height:6px;border-radius:4px;background:var(--line);width:100%;}
   .track-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:var(--matcha);}
   .track-target{position:absolute;top:-3px;width:2px;height:12px;background:var(--alert);}
   .track-target-label{position:absolute;top:10px;font-size:10.5px;color:var(--alert);font-family:'IBM Plex Mono',monospace;transform:translateX(-50%);}
-  .donut{display:none;}
 
   .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
   @media (max-width:900px){.cards{grid-template-columns:repeat(2,1fr);}}
@@ -112,18 +76,19 @@
   .err{background:var(--alert);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
 
   .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
-  .mini-grid-4{grid-template-columns:repeat(4,1fr);}
   @media (max-width:780px){.mini-grid{grid-template-columns:1fr;}}
   .mini-card{background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px;}
   .mini-card h3{font-family:'Fraunces',serif;font-size:16px;margin:0;font-weight:600;}
   .capsm{font-size:11px;color:var(--muted);margin-bottom:14px;}
+
   .bar-item{display:flex;align-items:center;gap:10px;font-size:12.5px;margin-bottom:9px;}
-  .bar-item .bn{width:66px;flex-shrink:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-item .bn{width:140px;flex-shrink:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .bar-item .bt{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;}
   .bar-item .bf{height:100%;}
-  .bar-item .bv{width:44px;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px;}
+  .bar-item .bv{width:50px;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px;}
+  
   #topProducts .bar-item .bn{width:240px;}
-  #lateByRemark .bar-item .bn{width:130px;}
+  #topCouriers .bar-item .bn{width:140px;}
 
   .pie-legend-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;}
   .legend-item{display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:10px;}
@@ -155,13 +120,11 @@
   <div class="err" id="errBox">โหลดข้อมูลจาก Google Sheet ไม่สำเร็จ — ตรวจสอบว่าชีทแชร์แบบ "Anyone with the link can view" แล้วลอง Refresh อีกครั้ง</div>
   <div class="latest" id="latestLine">กำลังโหลดข้อมูล…</div>
 
-  <!-- 1. แถบ Tabs -->
   <div class="tabs">
     <div class="tab active"><b>On-Time Performance</b>Target ≥ 98%</div>
     <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
-  <!-- 2. Filters -->
   <div class="filters">
     <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
     <div><label>Week</label><select id="fWeek"><option value="">All</option></select></div>
@@ -171,17 +134,14 @@
     <div class="fbtn" onclick="clearFilters()">Clear filters</div>
   </div>
 
-  <!-- 3. KPI On-Time Performance -->
   <div class="section-kpi-title">KPI On-Time Performance</div>
 
-  <!-- 4. ส่วนแสดงผล % Hero (ทศนิยม 2 ตำแหน่ง) -->
   <div class="hero">
     <div class="hero-num" id="pctVal">—</div>
     <div class="hero-side">
       <div class="hero-cap">PACKED ON TIME · เป้าหมาย ≥ 98%</div>
       <div class="track"><div class="track-fill" id="trackFill" style="width:0%"></div><div class="track-target" style="left:98%"></div><div class="track-target-label" style="left:98%">98%</div></div>
     </div>
-    <div class="donut" id="donut" style="--pct:0"></div>
   </div>
 
   <div class="cards">
@@ -221,11 +181,18 @@
     </div>
   </div>
 
+  <!-- ส่วนแสดง Top 5 ขนส่ง -->
+  <div class="chart-card">
+    <h2>Top 5 Couriers</h2>
+    <div class="cap">ขนส่งที่ใช้งานมากที่สุด 5 อันดับแรก (นับตามจำนวนออเดอร์จาก คอลัมน์ R)</div>
+    <div id="topCouriers"></div>
+  </div>
+
   <div class="chart-card">
     <h2>Sales Channel Share</h2>
     <div class="cap">Orders by Brand (คอลัมน์ Sender Name)</div>
     <div class="pie-legend-row">
-      <div class="donut" id="brandPie" style="width:150px;height:150px;--pct:0;background:var(--line);"></div>
+      <div class="donut" id="brandPie" style="width:150px;height:150px;--pct:0;background:var(--line);border-radius:50%;"></div>
       <div id="brandLegend" style="flex:1;min-width:200px;"></div>
     </div>
     <div id="unspecifiedBrand" style="margin-top:14px;font-size:12px;color:var(--muted);"></div>
@@ -250,9 +217,6 @@
   </div>
 
   <div class="note" id="footerStats"></div>
-  <div class="note">
-    Sheet ID: 1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8 · Tab: DATA — คอลัมน์ "PK เสร็จ ภายในกี่วันที่ต้องส่ง" แบ่ง 3 ค่า: "แพ็คเสร็จในวัน" / "แพ็คเสร็จก่อนวันจัดส่ง" (ทั้งคู่นับว่าตรงเวลา) / "แพ็คล่าช้า" (นับเป็นล่าช้าเท่านั้น) — ปรับชื่อค่าได้ที่ CONFIG ด้านบนของ script ถ้าคำในชีทสะกดต่างไป
-  </div>
 </div>
 
 <script>
@@ -310,6 +274,7 @@ function parseRows(json){
       created:v(4), expected:v(5), product:v(6), qty:v(7),
       salesperson:v(8), sender:v(9), source:v(10), urgent:v(11),
       pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15), remark:v(16),
+      courier:v(17), // ดึงข้อมูลขนส่งจาก คอลัมน์ R (Index 17)
       expectedTs:dt(5), packedTs:dt(13)
     };
   }).filter(r=>r.orderRef);
@@ -328,6 +293,7 @@ function populateFilterOptions(){
   };
   fill('fMonth','month'); fill('fWeek','week'); fill('fUrgent','urgent'); fill('fSource','source');
 }
+
 function clearFilters(){
   ['fMonth','fWeek','fUrgent','fSource'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fSearch').value='';
@@ -341,9 +307,7 @@ function clearFilters(){
       if (id === 'fWeek') {
         const selectedWeek = document.getElementById('fWeek').value;
         const dWeekSel = document.getElementById('dWeek');
-        if (dWeekSel) {
-          dWeekSel.value = selectedWeek;
-        }
+        if (dWeekSel) dWeekSel.value = selectedWeek;
       }
       render();
     });
@@ -374,12 +338,11 @@ function render(){
   const orders = new Map();
   rows.forEach(r=>{
     if(!orders.has(r.orderRef)){
-      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, station:new Set()});
+      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, courier:r.courier});
     }
     const o = orders.get(r.orderRef);
     if(r.pkStatus === LATE_VALUE) o.status = 'ล่าช้า';
     else if(r.pkStatus === EARLY_VALUE && o.status !== 'ล่าช้า') o.status = 'ก่อนกำหนด';
-    if(r.station) o.station.add(r.station);
   });
 
   const orderList = [...orders.values()];
@@ -394,9 +357,7 @@ function render(){
   const platform = total - walkin;
 
   const pct = total ? (onTime/total*100) : 0;
-  document.getElementById('donut').style.setProperty('--pct', pct.toFixed(2));
   document.getElementById('trackFill').style.width = Math.min(pct,100).toFixed(2)+'%';
-  
   document.getElementById('pctVal').textContent = total ? pct.toFixed(2)+'%' : '—';
 
   document.getElementById('cOrders').textContent = total.toLocaleString();
@@ -415,6 +376,7 @@ function render(){
 
   drawWeekly(orderList);
   drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN);
+  drawTopCouriers(orderList); // เรียกฟังก์ชันวาด Top 5 ขนส่ง
   drawBrandPie(rows);
   drawTopProducts(rows);
   LAST_ROWS = rows;
@@ -426,10 +388,29 @@ function render(){
 function barsHTML(items, max){
   return items.map(it=>`
     <div class="bar-item">
-      <div class="bn">${it[0]}</div>
+      <div class="bn" title="${it[0]}">${it[0]}</div>
       <div class="bt"><div class="bf" style="width:${max?(it[1]/max*100):0}%;background:${it[2]||'var(--matcha)'}"></div></div>
       <div class="bv">${it[1].toLocaleString()}</div>
     </div>`).join('');
+}
+
+/* ฟังก์ชันคำนวณและวาดกราฟ Top 5 ขนส่ง */
+function drawTopCouriers(orderList){
+  const counts = {};
+  orderList.forEach(o=>{
+    const cName = (o.courier && o.courier.trim()) ? o.courier.trim() : 'ไม่ระบุ';
+    counts[cName] = (counts[cName] || 0) + 1;
+  });
+  
+  const top5 = Object.entries(counts)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 5);
+    
+  const max = top5.length ? top5[0][1] : 1;
+  
+  document.getElementById('topCouriers').innerHTML = top5.length
+    ? barsHTML(top5.map(([name, count]) => [name, count, '#C79A3E']), max)
+    : `<div style="color:var(--muted);font-size:13px;">ไม่พบข้อมูลขนส่ง</div>`;
 }
 
 function drawPercentChart(elId, items, targetPct){
@@ -542,30 +523,23 @@ function populateDetailWeeks(rows){
   }
 }
 
-/* drawDetailTable: แสดง ORDER REF แค่บรรทัดแรกของแต่ละออเดอร์ แต่แสดงสินค้าครบทุกบรรทัด */
 function drawDetailTable(rows){
   const topWk = document.getElementById('fWeek').value;
   const tableWk = document.getElementById('dWeek').value;
   const activeWk = tableWk || topWk;
 
-  // 1. กรองเฉพาะรายการสินค้าที่ล่าช้า
   let lateRows = rows.filter(r => r.pkStatus === LATE_VALUE && (!activeWk || r.week === activeWk));
-
-  // 2. นับจำนวนออเดอร์ที่ไม่ซ้ำกัน
   const uniqueOrderCount = new Set(lateRows.map(r => r.orderRef)).size;
 
-  // 3. เรียงลำดับตามวันที่แพ็คเสร็จล่าสุด
   lateRows.sort((a,b) => (b.packedTs || b.expectedTs) - (a.packedTs || a.expectedTs));
   
   const MAX = 300;
   const shown = lateRows.slice(0, MAX);
   
-  // ปรับข้อความหัวตาราง
   document.getElementById('detailCap').textContent =
     `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${uniqueOrderCount.toLocaleString()} ออเดอร์ (${lateRows.length.toLocaleString()} รายการ)` +
     (lateRows.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
     
-  // 4. วาดตารางโดยซ่อน WEEK, ORDER REF, SOURCE ในบรรทัดถัดไปของออเดอร์เดิม
   const tbody = document.querySelector('#detailTable tbody');
   const seenOrders = new Set();
 
