@@ -303,7 +303,9 @@ function parseRows(json){
 
     const rawCreated = v(4);
     const rawExpected = v(5);
-    const dateStr = formatDateStr(rawCreated) || formatDateStr(rawExpected);
+    
+    // *** จุดที่แก้ไข: ปรับให้อิงตามวันจัดส่ง (rawExpected) เป็นหลักก่อน เพื่อให้ตรงกับตัวกรอง Week ***
+    const dateStr = formatDateStr(rawExpected) || formatDateStr(rawCreated);
 
     return {
       year:v(0), month:v(1), week:String(v(2)), orderRef:String(v(3)),
