@@ -94,18 +94,18 @@
   .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
   .legend-item .lv{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:12px;}
 
-  /* ปรับแต่งส่วนตารางให้มีหน้าต่างเลื่อน (Scroll Box) */
+  /* ส่วนตารางเลื่อนได้ (Scroll Box) */
   .table-wrap2{
-    max-height: 420px; /* กำหนดความสูงสูงสุดของกล่อง */
-    overflow-y: auto;  /* เพิ่มแถบเลื่อนแนวตั้ง */
-    overflow-x: auto;  /* รองรับแถบเลื่อนแนวนอนถ้าหน้าจอแคบ */
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: auto;
     border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--panel);
   }
   #detailTable{width:100%;border-collapse:collapse;font-size:12.5px;}
   #detailTable th{
-    position: sticky;  /* ล็อกหัวตารางให้อยู่ด้านบนเวลาเลื่อนดูข้อมูล */
+    position: sticky;
     top: 0;
     background: var(--panel);
     z-index: 10;
@@ -202,6 +202,7 @@
     </div>
   </div>
 
+  <!-- ส่วนแสดง Top 10 ขนส่ง พร้อมชุดสีหลากหลาย -->
   <div class="chart-card">
     <h2>Top 10 Couriers</h2>
     <div class="cap">ขนส่งที่ใช้งานมากที่สุด 10 อันดับแรก (นับตามจำนวนออเดอร์จาก คอลัมน์ R)</div>
@@ -230,7 +231,6 @@
     <div class="filters" style="margin-bottom:14px;">
       <div><label>เลือก WEEK</label><select id="dWeek"><option value="">ทุก Week</option></select></div>
     </div>
-    <!-- กล่องตารางแบบ Scroll Box -->
     <div class="table-wrap2"><table id="detailTable">
       <thead><tr><th>WEEK</th><th>ORDER REF</th><th>SOURCE</th><th>PRODUCT</th><th>วันที่ต้องส่ง</th><th>วันที่แพ็คเสร็จ</th><th>STATUS</th><th>REMARK</th></tr></thead>
       <tbody></tbody>
@@ -415,6 +415,7 @@ function barsHTML(items, max){
     </div>`).join('');
 }
 
+/* ฟังก์ชันวาด Top 10 Couriers ด้วยชุดสีหลากหลาย (Multi-color Palette) */
 function drawTopCouriersVertical(orderList){
   const counts = {};
   orderList.forEach(o=>{
@@ -431,6 +432,20 @@ function drawTopCouriersVertical(orderList){
     svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="var(--muted)">ไม่พบข้อมูลขนส่ง</text>`;
     return;
   }
+
+  // ชุดสีสวยงามและเข้ากับธีมสำหรับขนส่งแต่ละอัน
+  const colorPalette = [
+    '#C79A3E', // Gold
+    '#5C7A3A', // Matcha
+    '#3E5527', // Dark Green
+    '#B9502F', // Terracotta Red
+    '#4A7C59', // Earthy Green
+    '#D97724', // Amber Orange
+    '#2E6B9E', // Deep Blue
+    '#8B5A2B', // Warm Brown
+    '#768A5D', // Olive Green
+    '#A0522D'  # Sienna
+  ];
 
   const W = 920, H = 310, padL = 45, padR = 20, padT = 30, padB = 110;
   const chartW = W - padL - padR;
@@ -458,9 +473,10 @@ function drawTopCouriersVertical(orderList){
     const bh = (count / maxVal) * chartH;
     const y = padT + chartH - bh;
     const labelY = padT + chartH + 16;
+    const barColor = colorPalette[i % colorPalette.length];
 
     bars += `
-      <rect x="${(cx - barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bh.toFixed(1)}" rx="4" fill="#C79A3E"></rect>
+      <rect x="${(cx - barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bh.toFixed(1)}" rx="4" fill="${barColor}"></rect>
       <text class="pbar-val" x="${cx}" y="${(y - 6).toFixed(1)}" text-anchor="middle">${count.toLocaleString()}</text>
       <text class="pbar-label" x="${cx}" y="${labelY}" text-anchor="end" transform="rotate(-35, ${cx}, ${labelY})">${fullName}</text>
     `;
