@@ -67,7 +67,7 @@
 
   .pbar-grid{stroke:var(--line);stroke-width:1;}
   .pbar-axis{fill:var(--muted);font-size:9px;font-family:'IBM Plex Mono',monospace;}
-  .pbar-label{fill:var(--ink);font-size:10.5px;}
+  .pbar-label{fill:var(--ink);font-size:10.5px;font-family:'Noto Sans Thai',sans-serif;}
   .pbar-val{fill:var(--ink);font-weight:700;font-size:11px;font-family:'IBM Plex Mono',monospace;}
   .pbar-target{stroke:var(--alert);stroke-width:1.3;stroke-dasharray:3,3;}
   .pbar-target-label{fill:var(--alert);font-size:9px;font-family:'IBM Plex Mono',monospace;}
@@ -180,11 +180,11 @@
     </div>
   </div>
 
-  <!-- ส่วนแสดง Top 5 ขนส่ง เป็นกราฟแท่งแนวตั้ง -->
+  <!-- ส่วนแสดง Top 10 ขนส่ง ชื่อเต็ม (ชื่อเอียงเพื่อให้อ่านได้ครบถ้วน) -->
   <div class="chart-card">
-    <h2>Top 5 Couriers</h2>
-    <div class="cap">ขนส่งที่ใช้งานมากที่สุด 5 อันดับแรก (นับตามจำนวนออเดอร์จาก คอลัมน์ R)</div>
-    <svg id="topCouriersSvg" viewBox="0 0 800 220" width="100%" height="220"></svg>
+    <h2>Top 10 Couriers</h2>
+    <div class="cap">ขนส่งที่ใช้งานมากที่สุด 10 อันดับแรก (นับตามจำนวนออเดอร์จาก คอลัมน์ R)</div>
+    <svg id="topCouriersSvg" viewBox="0 0 920 310" width="100%" height="310"></svg>
   </div>
 
   <div class="chart-card">
@@ -375,7 +375,7 @@ function render(){
 
   drawWeekly(orderList);
   drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN);
-  drawTopCouriersVertical(orderList); // วาดกราฟแท่งแนวตั้งของขนส่ง
+  drawTopCouriersVertical(orderList);
   drawBrandPie(rows);
   drawTopProducts(rows);
   LAST_ROWS = rows;
@@ -393,7 +393,7 @@ function barsHTML(items, max){
     </div>`).join('');
 }
 
-/* ฟังก์ชันวาด Top 5 ขนส่ง แบบกราฟแท่งแนวตั้ง (Vertical Bar Chart) */
+/* ฟังก์ชันวาด Top 10 ขนส่ง แบบกราฟแท่งแนวตั้ง + แสดงชื่อเต็ม (เอียงชื่อเพื่ออ่านง่าย) */
 function drawTopCouriersVertical(orderList){
   const counts = {};
   orderList.forEach(o=>{
@@ -401,24 +401,25 @@ function drawTopCouriersVertical(orderList){
     counts[cName] = (counts[cName] || 0) + 1;
   });
 
-  const top5 = Object.entries(counts)
+  const top10 = Object.entries(counts)
     .sort((a,b) => b[1] - a[1])
-    .slice(0, 5);
+    .slice(0, 10);
 
   const svg = document.getElementById('topCouriersSvg');
-  if(!top5.length){
+  if(!top10.length){
     svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="var(--muted)">ไม่พบข้อมูลขนส่ง</text>`;
     return;
   }
 
-  const W = 800, H = 220, padL = 40, padR = 20, padT = 30, padB = 40;
+  // ปรับพื้นที่ด้านล่าง (padB) เพิ่มขึ้นเป็น 110px เพื่อรองรับข้อความชื่อเต็มที่หมุนเอียง
+  const W = 920, H = 310, padL = 45, padR = 20, padT = 30, padB = 110;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
 
-  const maxVal = Math.max(...top5.map(d => d[1]), 1);
-  const n = top5.length;
+  const maxVal = Math.max(...top10.map(d => d[1]), 1);
+  const n = top10.length;
   const gap = chartW / n;
-  const barW = Math.min(50, gap * 0.5);
+  const barW = Math.min(38, gap * 0.5);
 
   // 1. เส้น Grid แนวนอน
   let grid = '';
@@ -432,20 +433,18 @@ function drawTopCouriersVertical(orderList){
     `;
   }
 
-  // 2. แท่งกราฟแนวตั้ง
+  // 2. แท่งกราฟแนวตั้ง และ ชื่อขนส่งเต็มๆ (หมุน -35 องศา)
   let bars = '';
-  top5.forEach(([name, count], i) => {
+  top10.forEach(([fullName, count], i) => {
     const cx = padL + gap * i + gap / 2;
     const bh = (count / maxVal) * chartH;
     const y = padT + chartH - bh;
-
-    // ย่อชื่อถ้ายาวเกินไป
-    const shortName = name.length > 18 ? name.substring(0, 16) + '…' : name;
+    const labelY = padT + chartH + 16;
 
     bars += `
       <rect x="${(cx - barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bh.toFixed(1)}" rx="4" fill="#C79A3E"></rect>
-      <text class="pbar-val" x="${cx}" y="${(y - 8).toFixed(1)}" text-anchor="middle">${count.toLocaleString()}</text>
-      <text class="pbar-label" x="${cx}" y="${H - 12}" text-anchor="middle" font-size="11px">${shortName}</text>
+      <text class="pbar-val" x="${cx}" y="${(y - 6).toFixed(1)}" text-anchor="middle">${count.toLocaleString()}</text>
+      <text class="pbar-label" x="${cx}" y="${labelY}" text-anchor="end" transform="rotate(-35, ${cx}, ${labelY})">${fullName}</text>
     `;
   });
 
