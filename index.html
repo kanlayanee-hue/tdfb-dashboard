@@ -94,9 +94,31 @@
   .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
   .legend-item .lv{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:12px;}
 
-  .table-wrap2{overflow-x:auto;}
+  /* ปรับแต่งส่วนตารางให้มีหน้าต่างเลื่อน (Scroll Box) */
+  .table-wrap2{
+    max-height: 420px; /* กำหนดความสูงสูงสุดของกล่อง */
+    overflow-y: auto;  /* เพิ่มแถบเลื่อนแนวตั้ง */
+    overflow-x: auto;  /* รองรับแถบเลื่อนแนวนอนถ้าหน้าจอแคบ */
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
   #detailTable{width:100%;border-collapse:collapse;font-size:12.5px;}
-  #detailTable th{text-align:left;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--ink);white-space:nowrap;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;}
+  #detailTable th{
+    position: sticky;  /* ล็อกหัวตารางให้อยู่ด้านบนเวลาเลื่อนดูข้อมูล */
+    top: 0;
+    background: var(--panel);
+    z-index: 10;
+    text-align:left;
+    color:var(--muted);
+    font-weight:600;
+    padding:10px;
+    border-bottom:2px solid var(--ink);
+    white-space:nowrap;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
   #detailTable td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
   #detailTable td.late{color:var(--alert);font-weight:600;}
 </style>
@@ -180,7 +202,6 @@
     </div>
   </div>
 
-  <!-- ส่วนแสดง Top 10 ขนส่ง ชื่อเต็ม (ชื่อเอียงเพื่อให้อ่านได้ครบถ้วน) -->
   <div class="chart-card">
     <h2>Top 10 Couriers</h2>
     <div class="cap">ขนส่งที่ใช้งานมากที่สุด 10 อันดับแรก (นับตามจำนวนออเดอร์จาก คอลัมน์ R)</div>
@@ -209,6 +230,7 @@
     <div class="filters" style="margin-bottom:14px;">
       <div><label>เลือก WEEK</label><select id="dWeek"><option value="">ทุก Week</option></select></div>
     </div>
+    <!-- กล่องตารางแบบ Scroll Box -->
     <div class="table-wrap2"><table id="detailTable">
       <thead><tr><th>WEEK</th><th>ORDER REF</th><th>SOURCE</th><th>PRODUCT</th><th>วันที่ต้องส่ง</th><th>วันที่แพ็คเสร็จ</th><th>STATUS</th><th>REMARK</th></tr></thead>
       <tbody></tbody>
@@ -273,7 +295,7 @@ function parseRows(json){
       created:v(4), expected:v(5), product:v(6), qty:v(7),
       salesperson:v(8), sender:v(9), source:v(10), urgent:v(11),
       pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15), remark:v(16),
-      courier:v(17), // คอลัมน์ R (Index 17)
+      courier:v(17),
       expectedTs:dt(5), packedTs:dt(13)
     };
   }).filter(r=>r.orderRef);
@@ -393,7 +415,6 @@ function barsHTML(items, max){
     </div>`).join('');
 }
 
-/* ฟังก์ชันวาด Top 10 ขนส่ง แบบกราฟแท่งแนวตั้ง + แสดงชื่อเต็ม (เอียงชื่อเพื่ออ่านง่าย) */
 function drawTopCouriersVertical(orderList){
   const counts = {};
   orderList.forEach(o=>{
@@ -411,7 +432,6 @@ function drawTopCouriersVertical(orderList){
     return;
   }
 
-  // ปรับพื้นที่ด้านล่าง (padB) เพิ่มขึ้นเป็น 110px เพื่อรองรับข้อความชื่อเต็มที่หมุนเอียง
   const W = 920, H = 310, padL = 45, padR = 20, padT = 30, padB = 110;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
@@ -421,7 +441,6 @@ function drawTopCouriersVertical(orderList){
   const gap = chartW / n;
   const barW = Math.min(38, gap * 0.5);
 
-  // 1. เส้น Grid แนวนอน
   let grid = '';
   const steps = 4;
   for(let i=0; i<=steps; i++){
@@ -433,7 +452,6 @@ function drawTopCouriersVertical(orderList){
     `;
   }
 
-  // 2. แท่งกราฟแนวตั้ง และ ชื่อขนส่งเต็มๆ (หมุน -35 องศา)
   let bars = '';
   top10.forEach(([fullName, count], i) => {
     const cx = padL + gap * i + gap / 2;
@@ -571,17 +589,14 @@ function drawDetailTable(rows){
 
   lateRows.sort((a,b) => (b.packedTs || b.expectedTs) - (a.packedTs || a.expectedTs));
   
-  const MAX = 300;
-  const shown = lateRows.slice(0, MAX);
-  
   document.getElementById('detailCap').textContent =
     `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${uniqueOrderCount.toLocaleString()} ออเดอร์ (${lateRows.length.toLocaleString()} รายการ)` +
-    (lateRows.length > MAX ? ` (แสดง ${MAX} รายการแรก)` : '') + ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
+    ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
     
   const tbody = document.querySelector('#detailTable tbody');
   const seenOrders = new Set();
 
-  tbody.innerHTML = shown.length ? shown.map(r => {
+  tbody.innerHTML = lateRows.length ? lateRows.map(r => {
     const isFirstRowOfOrder = !seenOrders.has(r.orderRef);
     if (isFirstRowOfOrder) {
       seenOrders.add(r.orderRef);
