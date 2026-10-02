@@ -6,6 +6,10 @@
 <title>Packing &amp; Dispatch Performance — Matchazuki</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<!-- html2canvas and jspdf for exporting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
   :root{
     --bg:#F7F7F1; --panel:#FFFFFF; --ink:#232A1C; --muted:#767F6D;
@@ -14,7 +18,7 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai',sans-serif;-webkit-font-smoothing:antialiased;}
-  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 70px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 70px;background:var(--bg);}
 
   header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:28px;}
   .brand{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin-bottom:10px;letter-spacing:.03em;}
@@ -24,9 +28,23 @@
   .sub{color:var(--muted);font-size:14px;margin-top:6px;}
   .meta{text-align:right;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
   #fetchedAt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;display:block;margin-top:3px;}
-  .actions{margin-top:10px;display:flex;gap:8px;justify-content:flex-end;}
-  button.refresh{background:var(--ink);color:#fff;border:none;border-radius:100px;padding:8px 18px;font-weight:600;font-size:12px;cursor:pointer;letter-spacing:.03em;}
-  button.refresh:hover{background:var(--matcha-deep);}
+  
+  /* Export & Action Buttons */
+  .actions{margin-top:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+  .btn-action{
+    display:inline-flex;align-items:center;gap:6px;border:none;border-radius:8px;
+    padding:8px 16px;font-weight:600;font-size:13px;cursor:pointer;
+    color:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.12);transition:all 0.2s ease;
+  }
+  .btn-action:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,0.18);}
+  .btn-action:active{transform:translateY(0);}
+  .btn-action svg{width:16px;height:16px;fill:currentColor;}
+
+  .btn-refresh{background:#232A1C;}
+  .btn-print{background:#00965E;}
+  .btn-jpg{background:#5346E0;}
+  .btn-pdf{background:#E0284A;}
+
   .latest{color:var(--muted);font-size:12.5px;margin-bottom:22px;font-family:'IBM Plex Mono',monospace;}
   .tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
   .tab{background:transparent;border:1px solid var(--line);border-radius:100px;padding:9px 18px;font-size:12.5px;color:var(--muted);cursor:default;}
@@ -94,7 +112,6 @@
   .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
   .legend-item .lv{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:12px;}
 
-  /* ส่วนตารางเลื่อนได้ (Scroll Box) */
   .table-wrap2{
     max-height: 420px;
     overflow-y: auto;
@@ -121,10 +138,18 @@
   }
   #detailTable td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
   #detailTable td.late{color:var(--alert);font-weight:600;}
+
+  /* Print Styles */
+  @media print {
+    .actions, .filters, .fbtn, #fSearch { display: none !important; }
+    .table-wrap2 { max-height: none !important; overflow: visible !important; }
+    body { background: #fff !important; }
+    .wrap { padding: 0 !important; max-width: 100% !important; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="dashboardContent">
 
   <header>
     <div>
@@ -134,7 +159,24 @@
     </div>
     <div class="meta">
       Last Updated on<br><span id="fetchedAt">—</span>
-      <div class="actions"><button class="refresh" onclick="loadSheet()">Refresh</button></div>
+      <div class="actions">
+        <button class="btn-action btn-refresh" onclick="loadSheet()">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          Refresh
+        </button>
+        <button class="btn-action btn-print" onclick="window.print()">
+          <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+          พิมพ์
+        </button>
+        <button class="btn-action btn-jpg" onclick="exportImage()">
+          <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          JPG
+        </button>
+        <button class="btn-action btn-pdf" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v1.5H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5z"/></svg>
+          PDF
+        </button>
+      </div>
     </div>
   </header>
 
@@ -143,7 +185,6 @@
 
   <div class="tabs">
     <div class="tab active"><b>On-Time Performance</b>Target ≥ 98%</div>
-    <div class="tab"><b>Forecast</b>ประมาณการ</div>
   </div>
 
   <!-- Filters Section -->
@@ -204,7 +245,6 @@
     </div>
   </div>
 
-  <!-- Top 10 Couriers -->
   <div class="chart-card">
     <h2>Top 10 Couriers</h2>
     <div class="cap">ขนส่งที่ใช้งานมากที่สุด 10 อันดับแรก (นับตามจำนวนออเดอร์จาก คอลัมน์ R)</div>
@@ -303,8 +343,6 @@ function parseRows(json){
 
     const rawCreated = v(4);
     const rawExpected = v(5);
-    
-    // *** จุดที่แก้ไข: ปรับให้อิงตามวันจัดส่ง (rawExpected) เป็นหลักก่อน เพื่อให้ตรงกับตัวกรอง Week ***
     const dateStr = formatDateStr(rawExpected) || formatDateStr(rawCreated);
 
     return {
@@ -684,6 +722,32 @@ function drawWeekly(orderList){
     ${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#3E5527"></circle>`).join('')}
     ${valueLabels}
     ${labels}`;
+}
+
+/* Export Functions */
+function exportImage() {
+  const target = document.getElementById('dashboardContent');
+  html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `Matchazuki_Dashboard_${new Date().toISOString().slice(0,10)}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.9);
+    link.click();
+  });
+}
+
+function exportPDF() {
+  const target = document.getElementById('dashboardContent');
+  html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Matchazuki_Dashboard_${new Date().toISOString().slice(0,10)}.pdf`);
+  });
 }
 
 loadSheet();
