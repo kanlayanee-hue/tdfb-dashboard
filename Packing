@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Packing &amp; Dispatch Performance — Matchazuki</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg:#F7F7F1; --panel:#FFFFFF; --ink:#232A1C; --muted:#767F6D;
+    --line:#E7E6DC; --matcha:#5C7A3A; --matcha-deep:#33421F;
+    --alert:#B4512E; --gold:#B08A2E;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai',sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 70px;background:var(--bg);}
+
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .brand{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin-bottom:10px;letter-spacing:.03em;}
+  .brand .dot{width:20px;height:20px;border-radius:50%;background:var(--matcha);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;}
+  h1{font-family:'Fraunces',serif;font-size:36px;margin:0;font-weight:600;letter-spacing:-.01em;}
+  h1 .accent{color:var(--matcha-deep);font-style:italic;}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px;}
+  .meta{text-align:right;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+  #fetchedAt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;display:block;margin-top:3px;}
+  
+  .actions{margin-top:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+  .btn-action{
+    display:inline-flex;align-items:center;gap:6px;border:none;border-radius:8px;
+    padding:8px 16px;font-weight:600;font-size:13px;cursor:pointer;
+    color:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.12);transition:all 0.2s ease;
+  }
+  .btn-action:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,0.18);}
+  .btn-action:active{transform:translateY(0);}
+  .btn-action svg{width:16px;height:16px;fill:currentColor;}
+
+  .btn-refresh{background:#232A1C;}
+  .btn-print{background:#00965E;}
+  .btn-jpg{background:#5346E0;}
+  .btn-pdf{background:#E0284A;}
+
+  .latest{color:var(--muted);font-size:12.5px;margin-bottom:22px;font-family:'IBM Plex Mono',monospace;}
+  .tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+  .tab{background:transparent;border:1px solid var(--line);border-radius:100px;padding:9px 18px;font-size:12.5px;color:var(--muted);cursor:default;}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab b{font-size:12.5px;color:inherit;font-weight:600;}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:28px;}
+  .filters label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
+  .filters select,.filters input{font-family:'Noto Sans Thai',sans-serif;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:106px;}
+  .filters .fbtn{align-self:flex-end;background:transparent;border:none;border-bottom:1px solid var(--ink);padding:8px 0;font-size:12.5px;cursor:pointer;color:var(--ink);}
+
+  .section-kpi-title{text-align:center;font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);margin:20px 0 10px;letter-spacing:-.01em;}
+
+  .hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:10px 0 34px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .hero-num{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(40px, 6vw, 56px);line-height:1;letter-spacing:-.02em;}
+  .hero-side{width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;}
+  .hero-cap{color:var(--muted);font-size:13px;margin-bottom:12px;}
+  .track{position:relative;height:6px;border-radius:4px;background:var(--line);width:100%;}
+  .track-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:var(--matcha);}
+  .track-target{position:absolute;top:-3px;width:2px;height:12px;background:var(--alert);}
+  .track-target-label{position:absolute;top:10px;font-size:10.5px;color:var(--alert);font-family:'IBM Plex Mono',monospace;transform:translateX(-50%);}
+
+  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
+  @media (max-width:900px){.cards{grid-template-columns:repeat(2,1fr);}}
+  .card{background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 16px;text-align:left;}
+  .card .label{font-size:10.5px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;}
+  .card .val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;}
+  .card.ok .val{color:var(--matcha-deep);}
+  .card.bad .val{color:var(--alert);}
+
+  .chart-card{background:var(--panel);padding:28px 0;margin-top:0;border-bottom:1px solid var(--line);}
+  .chart-card h2{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px;font-weight:600;}
+  .chart-card .cap{font-size:12px;color:var(--muted);margin-bottom:18px;}
+  
+  svg text{font-family:'IBM Plex Mono',monospace;font-size:13px;fill:var(--muted);}
+  svg text.wk-val{fill:var(--matcha-deep);font-size:15px;font-weight:700;}
+
+  .pbar-grid{stroke:var(--line);stroke-width:1;}
+  .pbar-axis{fill:var(--muted);font-size:9px;font-family:'IBM Plex Mono',monospace;}
+  .pbar-label{fill:var(--ink);font-size:10.5px;font-family:'Noto Sans Thai',sans-serif;}
+  .pbar-val{fill:var(--ink);font-weight:700;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+  .pbar-target{stroke:var(--alert);stroke-width:1.3;stroke-dasharray:3,3;}
+  .pbar-target-label{fill:var(--alert);font-size:9px;font-family:'IBM Plex Mono',monospace;}
+
+  .note{margin-top:22px;font-size:11.5px;color:var(--muted);line-height:1.7;font-family:'IBM Plex Mono',monospace;}
+  .err{background:var(--alert);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
+
+  .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:0;border-top:1px solid var(--line);border-left:1px solid var(--line);}
+  @media (max-width:780px){.mini-grid{grid-template-columns:1fr;}}
+  .mini-card{background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px;}
+  .mini-card h3{font-family:'Fraunces',serif;font-size:16px;margin:0;font-weight:600;}
+  .capsm{font-size:11px;color:var(--muted);margin-bottom:14px;}
+
+  .bar-item{display:flex;align-items:center;gap:10px;font-size:12.5px;margin-bottom:9px;}
+  .bar-item .bn{width:140px;flex-shrink:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-item .bt{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;}
+  .bar-item .bf{height:100%;}
+  .bar-item .bv{width:50px;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px;}
+  
+  #topProducts .bar-item .bn{width:240px;}
+
+  .pie-legend-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;}
+  .legend-item{display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:10px;}
+  .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .legend-item .lv{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:12px;}
+
+  .table-wrap2{
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  #detailTable{width:100%;border-collapse:collapse;font-size:12.5px;}
+  #detailTable th{
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    z-index: 10;
+    text-align:left;
+    color:var(--muted);
+    font-weight:600;
+    padding:10px;
+    border-bottom:2px solid var(--ink);
+    white-space:nowrap;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  #detailTable td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  #detailTable td.late{color:var(--alert);font-weight:600;}
+
+  @media print {
+    .actions, .filters, .fbtn, #fSearch { display: none !important; }
+    .table-wrap2 { max-height: none !important; overflow: visible !important; }
+    body { background: #fff !important; }
+    .wrap { padding: 0 !important; max-width: 100% !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="dashboardContent">
+
+  <header>
+    <div>
+      <div class="brand"><span class="dot">🍵</span> TDFB DELIVERY OPERATIONS</div>
+      <h1>Packing &amp; Dispatch <span class="accent">Performance</span></h1>
+      <div class="sub">ภาพรวมประสิทธิภาพการแพ็คและจัดส่งสินค้าประจำวัน</div>
+    </div>
+    <div class="meta">
+      Last Updated on<br><span id="fetchedAt">—</span>
+      <div class="actions">
+        <button class="btn-action btn-refresh" onclick="loadSheet()">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          Refresh
+        </button>
+        <button class="btn-action btn-print" onclick="window.print()">
+          <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+          พิมพ์
+        </button>
+        <button class="btn-action btn-jpg" onclick="exportImage()">
+          <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          JPG
+        </button>
+        <button class="btn-action btn-pdf" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v1.5H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5z"/></svg>
+          PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="err" id="errBox">โหลดข้อมูลจาก Google Sheet ไม่สำเร็จ — ตรวจสอบว่าชีทแชร์แบบ "Anyone with the link can view" แล้วลอง Refresh อีกครั้ง</div>
+  <div class="latest" id="latestLine">กำลังโหลดข้อมูล…</div>
+
+  <div class="tabs">
+    <div class="tab active"><b>On-Time Performance</b>Target ≥ 98%</div>
+  </div>
+
+  <div class="filters">
+    <div><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
+    <div><label>Week</label><select id="fWeek"><option value="">All</option></select></div>
+    <div><label>Date</label><select id="fDate"><option value="">All</option></select></div>
+    <div><label>Shipping</label><select id="fUrgent"><option value="">All</option></select></div>
+    <div><label>Channel</label><select id="fSource"><option value="">All</option></select></div>
+    <div><label>Order Reference</label><input id="fSearch" placeholder="Search order…"></div>
+    <div class="fbtn" onclick="clearFilters()">Clear filters</div>
+  </div>
+
+  <div class="section-kpi-title">KPI On-Time Performance</div>
+
+  <div class="hero">
+    <div class="hero-num" id="pctVal">—</div>
+    <div class="hero-side">
+      <div class="hero-cap">PACKED ON TIME · เป้าหมาย ≥ 98%</div>
+      <div class="track"><div class="track-fill" id="trackFill" style="width:0%"></div><div class="track-target" style="left:98%"></div><div class="track-target-label" style="left:98%">98%</div></div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Orders</div><div class="val" id="cOrders">—</div></div>
+    <div class="card ok"><div class="label">Packed on time</div><div class="val" id="cOnTime">—</div></div>
+    <div class="card"><div class="label">แพ็คก่อนวันจัดส่ง</div><div class="val" id="cEarly">—</div></div>
+    <div class="card bad"><div class="label">แพ็คล่าช้า</div><div class="val" id="cLate">—</div></div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="label">Platform</div><div class="val" id="cPlatform">—</div></div>
+    <div class="card"><div class="label">Walk-in</div><div class="val" id="cWalkin">—</div></div>
+    <div class="card"><div class="label">ส่งปกติ</div><div class="val" id="cNormal">—</div></div>
+    <div class="card bad"><div class="label">ด่วน</div><div class="val" id="cUrgent">—</div></div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Weekly Order Volume</h2>
+    <div class="cap">Unique orders per week</div>
+    <svg id="weekChart" viewBox="0 0 1140 55" width="100%" height="55"></svg>
+  </div>
+
+  <div class="mini-grid">
+    <div class="mini-card">
+      <h3>Packing On-Time</h3>
+      <div class="capsm">Target ≥ 98%</div>
+      <svg id="barOnTime" viewBox="0 0 300 190" width="100%" height="190"></svg>
+    </div>
+    <div class="mini-card">
+      <h3>Orders by Platform</h3>
+      <div class="capsm">Platform vs Walk-in</div>
+      <svg id="barPlatform" viewBox="0 0 300 190" width="100%" height="190"></svg>
+    </div>
+    <div class="mini-card">
+      <h3>ประเภทการส่ง</h3>
+      <div class="capsm">ด่วน vs ปกติ</div>
+      <svg id="barShipping" viewBox="0 0 300 190" width="100%" height="190"></svg>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Top 10 Couriers</h2>
+    <div class="cap">ขนส่งที่ใช้งานมากที่สุด 10 อันดับแรก</div>
+    <svg id="topCouriersSvg" viewBox="0 0 920 310" width="100%" height="310"></svg>
+  </div>
+
+  <div class="chart-card">
+    <h2>Sales Channel Share</h2>
+    <div class="cap">Orders by Brand (คอลัมน์ Sender Name)</div>
+    <div class="pie-legend-row">
+      <div class="donut" id="brandPie" style="width:150px;height:150px;--pct:0;background:var(--line);border-radius:50%;"></div>
+      <div id="brandLegend" style="flex:1;min-width:200px;"></div>
+    </div>
+    <div id="unspecifiedBrand" style="margin-top:14px;font-size:12px;color:var(--muted);"></div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Top Products</h2>
+    <div class="cap">สินค้าที่มีออเดอร์มากที่สุด (Top 8, นับจากรายการสินค้าในออเดอร์)</div>
+    <div id="topProducts"></div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Order Detail</h2>
+    <div class="cap" id="detailCap">แสดงรายการ "แพ็คล่าช้า"</div>
+    <div class="filters" style="margin-bottom:14px;">
+      <div><label>เลือก WEEK</label><select id="dWeek"><option value="">ทุก Week</option></select></div>
+    </div>
+    <div class="table-wrap2"><table id="detailTable">
+      <thead><tr><th>WEEK</th><th>ORDER REF</th><th>SOURCE</th><th>PRODUCT</th><th>วันที่ต้องส่ง</th><th>วันที่แพ็คเสร็จ</th><th>STATUS</th><th>REMARK</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="note" id="footerStats"></div>
+</div>
+
+<script>
+const SHEET_ID = "1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8";
+const SHEET_NAME = "Packing";
+const SAMEDAY_VALUE = "แพ็คเสร็จในวัน";
+const EARLY_VALUE = "แพ็คเสร็จก่อนวันจัดส่ง";
+const LATE_VALUE = "แพ็คล่าช้า";
+
+let ALL_ROWS = [];
+let LAST_ROWS = [];
+
+function loadSheet(){
+  document.getElementById('errBox').style.display = 'none';
+  document.getElementById('latestLine').textContent = 'กำลังโหลดข้อมูล…';
+  if(window._loadTimer) clearTimeout(window._loadTimer);
+  window.google = window.google || {};
+  window.google.visualization = window.google.visualization || {};
+  window.google.visualization.Query = {
+    setResponse: function(json){
+      clearTimeout(window._loadTimer);
+      try{
+        parseRows(json);
+        document.getElementById('errBox').style.display = 'none';
+      }catch(e){
+        console.error(e);
+        showErr();
+      }
+    }
+  };
+  const s = document.createElement('script');
+  s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
+  s.onerror = showErr;
+  s.id = 'gvizScript';
+  const old = document.getElementById('gvizScript');
+  if(old) old.remove();
+  document.body.appendChild(s);
+  window._loadTimer = setTimeout(showErr, 60000);
+}
+function showErr(){ document.getElementById('errBox').style.display='block'; document.getElementById('latestLine').textContent=''; }
+
+function formatDateStr(val){
+  if(!val) return '';
+  if(typeof val === 'string' && val.includes('T')) {
+    return val.split('T')[0];
+  }
+  return String(val).split(' ')[0];
+}
+
+function parseRows(json){
+  const rows = json.table.rows;
+  ALL_ROWS = rows.map(r=>{
+    const c = r.c;
+    const v = i => c[i] ? (c[i].f || c[i].v) : "";
+    const dt = i => {
+      const cell = c[i];
+      if(!cell || cell.v == null) return 0;
+      const m = String(cell.v).match(/Date\((\d+),(\d+),(\d+)/);
+      return m ? new Date(+m[1], +m[2], +m[3]).getTime() : 0;
+    };
+
+    const rawCreated = v(4);
+    const rawExpected = v(5);
+    const dateStr = formatDateStr(rawExpected) || formatDateStr(rawCreated);
+
+    return {
+      year:v(0), month:v(1), week:String(v(2)), orderRef:String(v(3)),
+      created:rawCreated, expected:rawExpected, dateStr:dateStr, product:v(6), qty:v(7),
+      salesperson:v(8), sender:v(9), source:v(10), urgent:v(11),
+      pkStatus:v(12), updatedOn:v(13), station:v(14), status:v(15), remark:v(16),
+      courier:v(17),
+      expectedTs:dt(5), packedTs:dt(13)
+    };
+  }).filter(r=>r.orderRef);
+  populateFilterOptions();
+  render();
+  document.getElementById('fetchedAt').textContent = new Date().toLocaleString('th-TH');
+}
+
+function populateFilterOptions(){
+  const fill = (id, key) => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    const vals = [...new Set(ALL_ROWS.map(r=>r[key]).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">All</option>' + vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+    sel.value = cur;
+  };
+  fill('fMonth','month'); 
+  fill('fWeek','week'); 
+  fill('fDate','dateStr');
+  fill('fUrgent','urgent'); 
+  fill('fSource','source');
+}
+
+function clearFilters(){
+  ['fMonth','fWeek','fDate','fUrgent','fSource'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSearch').value='';
+  document.getElementById('dWeek').value='';
+  render();
+}
+
+['fMonth','fWeek','fDate','fUrgent','fSource'].forEach(id=>{
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById(id).addEventListener('change', () => {
+      if (id === 'fWeek') {
+        const selectedWeek = document.getElementById('fWeek').value;
+        const dWeekSel = document.getElementById('dWeek');
+        if (dWeekSel) dWeekSel.value = selectedWeek;
+      }
+      render();
+    });
+  });
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('fSearch').addEventListener('input', render);
+  document.getElementById('dWeek').addEventListener('change', ()=>drawDetailTable(LAST_ROWS));
+});
+
+function render(){
+  if(!ALL_ROWS.length) return;
+  const fMonth = document.getElementById('fMonth').value;
+  const fWeek = document.getElementById('fWeek').value;
+  const fDate = document.getElementById('fDate').value;
+  const fUrgent = document.getElementById('fUrgent').value;
+  const fSource = document.getElementById('fSource').value;
+  const fSearch = document.getElementById('fSearch').value.trim().toLowerCase();
+
+  const rows = ALL_ROWS.filter(r=>
+    (!fMonth || r.month===fMonth) &&
+    (!fWeek || r.week===fWeek) &&
+    (!fDate || r.dateStr===fDate) &&
+    (!fUrgent || r.urgent===fUrgent) &&
+    (!fSource || r.source===fSource) &&
+    (!fSearch || r.orderRef.toLowerCase().includes(fSearch))
+  );
+
+  const orders = new Map();
+  rows.forEach(r=>{
+    if(!orders.has(r.orderRef)){
+      orders.set(r.orderRef, {status:'ในวัน', urgent:r.urgent, source:r.source, week:r.week, courier:r.courier});
+    }
+    const o = orders.get(r.orderRef);
+    if(r.pkStatus === LATE_VALUE) o.status = 'ล่าช้า';
+    else if(r.pkStatus === EARLY_VALUE && o.status !== 'ล่าช้า') o.status = 'ก่อนกำหนด';
+  });
+
+  const orderList = [...orders.values()];
+  const total = orderList.length;
+  const late = orderList.filter(o=>o.status==='ล่าช้า').length;
+  const early = orderList.filter(o=>o.status==='ก่อนกำหนด').length;
+  const sameDay = total - late - early;
+  const onTime = total - late;
+  const urgentN = orderList.filter(o=>o.urgent==='ส่งด่วน').length;
+  const normalN = orderList.filter(o=>o.urgent==='ส่งปกติ').length;
+  const walkin = orderList.filter(o=>!/shopee|tiktok|lazada/i.test(o.source||'')).length;
+  const platform = total - walkin;
+
+  const pct = total ? (onTime/total*100) : 0;
+  document.getElementById('trackFill').style.width = Math.min(pct,100).toFixed(2)+'%';
+  document.getElementById('pctVal').textContent = total ? pct.toFixed(2)+'%' : '—';
+
+  document.getElementById('cOrders').textContent = total.toLocaleString();
+  document.getElementById('cOnTime').textContent = onTime.toLocaleString();
+  document.getElementById('cLate').textContent = late.toLocaleString();
+  document.getElementById('cUrgent').textContent = urgentN.toLocaleString();
+  document.getElementById('cNormal').textContent = normalN.toLocaleString();
+  document.getElementById('cPlatform').textContent = platform.toLocaleString();
+  document.getElementById('cWalkin').textContent = walkin.toLocaleString();
+  document.getElementById('cEarly').textContent = early.toLocaleString();
+
+  const latestRow = rows[rows.length-1];
+  document.getElementById('latestLine').textContent = latestRow
+    ? `Latest — ${latestRow.orderRef} · ${latestRow.source} · ${latestRow.pkStatus||'—'}`
+    : 'ไม่พบข้อมูลตามตัวกรองที่เลือก';
+
+  drawWeekly(orderList);
+  drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN);
+  drawTopCouriersVertical(orderList);
+  drawBrandPie(rows);
+  drawTopProducts(rows);
+  LAST_ROWS = rows;
+  populateDetailWeeks(rows);
+  drawDetailTable(rows);
+  drawFooterStats(total, rows.length, late);
+}
+
+function barsHTML(items, max){
+  return items.map(it=>`
+    <div class="bar-item">
+      <div class="bn" title="${it[0]}">${it[0]}</div>
+      <div class="bt"><div class="bf" style="width:${max?(it[1]/max*100):0}%;background:${it[2]||'var(--matcha)'}"></div></div>
+      <div class="bv">${it[1].toLocaleString()}</div>
+    </div>`).join('');
+}
+
+function drawTopCouriersVertical(orderList){
+  const counts = {};
+  orderList.forEach(o=>{
+    const cName = (o.courier && o.courier.trim()) ? o.courier.trim() : 'ไม่ระบุ';
+    counts[cName] = (counts[cName] || 0) + 1;
+  });
+
+  const top10 = Object.entries(counts)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 10);
+
+  const svg = document.getElementById('topCouriersSvg');
+  if(!top10.length){
+    svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="var(--muted)">ไม่พบข้อมูลขนส่ง</text>`;
+    return;
+  }
+
+  const colorPalette = [
+    '#C79A3E', '#5C7A3A', '#3E5527', '#B9502F', '#4A7C59',
+    '#D97724', '#2E6B9E', '#8B5A2B', '#768A5D', '#A0522D'
+  ];
+
+  const W = 920, H = 310, padL = 45, padR = 20, padT = 30, padB = 110;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const maxVal = Math.max(...top10.map(d => d[1]), 1);
+  const n = top10.length;
+  const gap = chartW / n;
+  const barW = Math.min(38, gap * 0.5);
+
+  let grid = '';
+  const steps = 4;
+  for(let i=0; i<=steps; i++){
+    const val = Math.round((maxVal / steps) * i);
+    const y = padT + chartH - (i / steps * chartH);
+    grid += `
+      <line class="pbar-grid" x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}"></line>
+      <text class="pbar-axis" x="${padL - 8}" y="${y + 3}" text-anchor="end">${val.toLocaleString()}</text>
+    `;
+  }
+
+  let bars = '';
+  top10.forEach(([fullName, count], i) => {
+    const cx = padL + gap * i + gap / 2;
+    const bh = (count / maxVal) * chartH;
+    const y = padT + chartH - bh;
+    const labelY = padT + chartH + 16;
+    const barColor = colorPalette[i % colorPalette.length];
+
+    bars += `
+      <rect x="${(cx - barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bh.toFixed(1)}" rx="4" fill="${barColor}"></rect>
+      <text class="pbar-val" x="${cx}" y="${(y - 6).toFixed(1)}" text-anchor="middle">${count.toLocaleString()}</text>
+      <text class="pbar-label" x="${cx}" y="${labelY}" text-anchor="end" transform="rotate(-35, ${cx}, ${labelY})">${fullName}</text>
+    `;
+  });
+
+  svg.innerHTML = grid + bars;
+}
+
+function drawPercentChart(elId, items, targetPct){
+  const svg = document.getElementById(elId);
+  const total = items.reduce((s,it)=>s+it[1],0) || 1;
+  const W=300,H=190,padL=32,padB=26,padT=14;
+  const chartH = H-padT-padB, chartW = W-padL-14;
+  const n = items.length;
+  const gap = chartW/n;
+  const barW = Math.min(46, gap*0.5);
+  let grid = '';
+  [0,20,40,60,80,100].forEach(g=>{
+    const y = padT + chartH - (g/100*chartH);
+    grid += `<line class="pbar-grid" x1="${padL}" y1="${y}" x2="${W-8}" y2="${y}"></line>
+      <text class="pbar-axis" x="${padL-6}" y="${y+3}" text-anchor="end">${g}%</text>`;
+  });
+  let bars = '';
+  items.forEach((it,i)=>{
+    const pct = it[1]/total*100;
+    const cx = padL + gap*i + gap/2;
+    const bh = pct/100*chartH;
+    const y = padT + chartH - bh;
+    bars += `
+      <rect x="${(cx-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bh.toFixed(1)}" rx="3" fill="${it[2]}"></rect>
+      <text class="pbar-val" x="${cx}" y="${(y-6).toFixed(1)}" text-anchor="middle">${pct.toFixed(2)}%</text>
+      <text class="pbar-label" x="${cx}" y="${H-8}" text-anchor="middle">${it[0]}</text>`;
+  });
+  let target = '';
+  if(targetPct!=null){
+    const ty = padT + chartH - (targetPct/100*chartH);
+    target = `<line class="pbar-target" x1="${padL}" y1="${ty}" x2="${W-8}" y2="${ty}"></line>
+      <text class="pbar-target-label" x="${W-10}" y="${ty-3}" text-anchor="end">${targetPct}%</text>`;
+  }
+  svg.innerHTML = grid + bars + target;
+}
+
+function drawMiniBars(sameDay, early, late, platform, walkin, urgentN, normalN){
+  drawPercentChart('barOnTime', [['ตรงเวลา',sameDay+early,'#5C7A3A'],['ล่าช้า',late,'#B9502F']], 98);
+  drawPercentChart('barPlatform', [['Platform',platform,'#5C7A3A'],['Walk-in',walkin,'#C79A3E']], null);
+  drawPercentChart('barShipping', [['ด่วน',urgentN,'#B9502F'],['ปกติ',normalN,'#5C7A3A']], null);
+}
+
+function drawBrandPie(rows){
+  const counts = {};
+  const orderBrand = new Map();
+  rows.forEach(r=>{ if(!orderBrand.has(r.orderRef)) orderBrand.set(r.orderRef, r.sender || 'ไม่ระบุ'); });
+  orderBrand.forEach(b=>{ counts[b]=(counts[b]||0)+1; });
+  const total = [...orderBrand.values()].length || 1;
+  const palette = ['#5C7A3A','#C79A3E','#8B3A2A','#3E5527','#B08A2E','#6B8E4E'];
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const colors = {};
+  entries.forEach(([name],i)=>{ colors[name] = palette[i % palette.length]; });
+  let acc = 0;
+  const stops = entries.map(([name,n])=>{
+    const pct = n/total*100;
+    const s = `${colors[name]} ${acc.toFixed(2)}% ${(acc+pct).toFixed(2)}%`;
+    acc += pct;
+    return s;
+  }).join(', ');
+  document.getElementById('brandPie').style.background = `conic-gradient(${stops})`;
+  document.getElementById('brandLegend').innerHTML = entries.map(([name,n])=>`
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${colors[name]}"></span>
+      ${name} <span class="lv">${(n/total*100).toFixed(2)}% · ${n.toLocaleString()} orders</span>
+    </div>`).join('');
+
+  const unspecifiedRefs = [...orderBrand.entries()].filter(([ref,b])=>b==='ไม่ระบุ').map(([ref])=>ref);
+  const SHOW_MAX = 30;
+  document.getElementById('unspecifiedBrand').innerHTML = unspecifiedRefs.length
+    ? `Order Reference ที่ไม่ระบุ Sender Name (${unspecifiedRefs.length.toLocaleString()} ออเดอร์): ${unspecifiedRefs.slice(0,SHOW_MAX).join(', ')}` +
+      (unspecifiedRefs.length > SHOW_MAX ? ` … และอีก ${(unspecifiedRefs.length-SHOW_MAX).toLocaleString()} รายการ` : '')
+    : '';
+}
+
+function drawTopProducts(rows){
+  const counts = {};
+  rows.forEach(r=>{ if(r.product) counts[r.product] = (counts[r.product]||0) + 1; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max = top.length ? top[0][1] : 1;
+  document.getElementById('topProducts').innerHTML = top.length
+    ? barsHTML(top.map(([name,n])=>[name,n,'#5C7A3A']), max)
+    : `<div style="color:var(--muted);font-size:13px;">ไม่พบข้อมูลสินค้าตามตัวกรองที่เลือก</div>`;
+}
+
+function populateDetailWeeks(rows){
+  const sel = document.getElementById('dWeek');
+  const cur = sel.value;
+  const fWeek = document.getElementById('fWeek').value;
+  
+  const weekOrders = {};
+  rows.filter(r => r.pkStatus === LATE_VALUE).forEach(r => {
+    if (r.week) {
+      if (!weekOrders[r.week]) weekOrders[r.week] = new Set();
+      weekOrders[r.week].add(r.orderRef);
+    }
+  });
+
+  const wks = Object.keys(weekOrders).sort((a,b) => Number(a) - Number(b));
+  
+  sel.innerHTML = '<option value="">ทุก Week</option>' + wks.map(w => 
+    `<option value="${w}">W${w} (${weekOrders[w].size})</option>`
+  ).join('');
+  
+  if (fWeek && wks.includes(fWeek)) {
+    sel.value = fWeek;
+  } else if (wks.includes(cur)) {
+    sel.value = cur;
+  } else {
+    sel.value = '';
+  }
+}
+
+function drawDetailTable(rows){
+  const topWk = document.getElementById('fWeek').value;
+  const tableWk = document.getElementById('dWeek').value;
+  const activeWk = tableWk || topWk;
+
+  let lateRows = rows.filter(r => r.pkStatus === LATE_VALUE && (!activeWk || r.week === activeWk));
+  const uniqueOrderCount = new Set(lateRows.map(r => r.orderRef)).size;
+
+  lateRows.sort((a,b) => (b.packedTs || b.expectedTs) - (a.packedTs || a.expectedTs));
+  
+  document.getElementById('detailCap').textContent =
+    `แสดงรายการ "แพ็คล่าช้า" ${activeWk ? 'ของ Week '+activeWk : 'ทุก Week'} · ${uniqueOrderCount.toLocaleString()} ออเดอร์ (${lateRows.length.toLocaleString()} รายการ)` +
+    ' · เรียงตามวันที่แพ็คเสร็จล่าสุด';
+    
+  const tbody = document.querySelector('#detailTable tbody');
+  const seenOrders = new Set();
+
+  tbody.innerHTML = lateRows.length ? lateRows.map(r => {
+    const isFirstRowOfOrder = !seenOrders.has(r.orderRef);
+    if (isFirstRowOfOrder) {
+      seenOrders.add(r.orderRef);
+    }
+
+    return `
+      <tr style="${isFirstRowOfOrder ? 'border-top:1.5px solid var(--line);' : 'border-top:none;'}">
+        <td>${isFirstRowOfOrder ? 'W' + r.week : ''}</td>
+        <td style="font-weight:${isFirstRowOfOrder ? '600' : 'normal'}">${isFirstRowOfOrder ? r.orderRef : ''}</td>
+        <td>${isFirstRowOfOrder ? r.source : ''}</td>
+        <td>${r.product || '—'}</td>
+        <td>${r.expected || '—'}</td>
+        <td>${r.updatedOn || '—'}</td>
+        <td class="late">${r.pkStatus}</td>
+        <td>${r.remark || '—'}</td>
+      </tr>
+    `;
+  }).join('') : `<tr><td colspan="8" style="color:var(--muted);text-align:center;">ไม่มีรายการล่าช้าตามตัวกรองที่เลือก</td></tr>`;
+}
+
+function drawFooterStats(orders, lineItems, late){
+  document.getElementById('footerStats').textContent =
+    `COUNTUNIQUE(Order Reference) = ${orders.toLocaleString()} จาก ${lineItems.toLocaleString()} line items · ล่าช้า (แพ็ค) = ${late.toLocaleString()} ออเดอร์ · อัปเดตล่าสุด ${new Date().toLocaleString('th-TH')}`;
+}
+
+function drawWeekly(orderList){
+  const byWeek = {};
+  orderList.forEach(o=>{ if(o.week) byWeek[o.week] = (byWeek[o.week]||0) + 1; });
+  const weeks = Object.keys(byWeek).sort((a,b)=>Number(a)-Number(b));
+  const svg = document.getElementById('weekChart');
+  if(!weeks.length){ svg.innerHTML=''; return; }
+
+  const max = Math.max(...weeks.map(w=>byWeek[w]), 1);
+  const W = 1140, H = 55, pad = 24, padTop = 18;
+  const step = (W - 2 * pad) / Math.max(weeks.length - 1, 1);
+  
+  const pts = weeks.map((w, i) => {
+    const x = pad + i * step;
+    const y = padTop + (1 - byWeek[w] / max) * (H - pad - padTop);
+    return [x, y];
+  });
+  
+  const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const area = path + ` L${pts[pts.length - 1][0].toFixed(1)},${H - pad} L${pts[0][0].toFixed(1)},${H - pad} Z`;
+  
+  let labels = '';
+  weeks.forEach((w, i) => {
+    if(i % 2 === 0) labels += `<text x="${pts[i][0]}" y="${H - 2}" text-anchor="middle" font-size="11px">W${w}</text>`;
+  });
+  
+  let valueLabels = pts.map((p, i) => `<text class="wk-val" x="${p[0]}" y="${p[1] - 6}" text-anchor="middle">${byWeek[weeks[i]]}</text>`).join('');
+  
+  svg.innerHTML = `
+    <path d="${area}" fill="#5C7A3A22" stroke="none"></path>
+    <path d="${path}" fill="none" stroke="#5C7A3A" stroke-width="2"></path>
+    ${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#3E5527"></circle>`).join('')}
+    ${valueLabels}
+    ${labels}`;
+}
+
+function exportImage() {
+  const target = document.getElementById('dashboardContent');
+  html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `Matchazuki_Dashboard_Packing_${new Date().toISOString().slice(0,10)}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.9);
+    link.click();
+  });
+}
+
+function exportPDF() {
+  const target = document.getElementById('dashboardContent');
+  html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Matchazuki_Dashboard_Packing_${new Date().toISOString().slice(0,10)}.pdf`);
+  });
+}
+
+loadSheet();
+</script>
+</body>
+</html>
