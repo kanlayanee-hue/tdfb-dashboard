@@ -126,7 +126,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 th{position:sticky;top:0;background:var(--panel);z-index:2;text-align:left;color:var(--muted);font-weight:600;padding:10px;border-bottom:2px solid var(--teal);white-space:nowrap;}
 td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
 td.late{color:var(--alert);font-weight:600;}
-td.prod{max-width:340px;overflow:hidden;text-overflow:ellipsis;}
+td.prod{white-space:normal;min-width:260px;max-width:400px;overflow-wrap:anywhere;line-height:1.5;}
 td.cause{white-space:normal;min-width:260px;max-width:420px;overflow-wrap:anywhere;line-height:1.5;color:var(--gold);}
 .note{margin-top:22px;font-size:12px;color:var(--muted);line-height:1.7;}
 
