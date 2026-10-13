@@ -208,10 +208,10 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
     </div>
 
     <div class="stats">
-      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div><div><div class="sl">จำนวนสินค้า (ชิ้น)</div><div class="sv" id="cUnits">—</div></div></div>
+      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div><div><div class="sl">จำนวนออเดอร์</div><div class="sv" id="cUnits">—</div></div></div>
       <div class="stat green"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg></div><div><div class="sl">แพ็คตรงเวลา</div><div class="sv"><span id="cOnTime">—</span><span class="sp" id="cOnPct"></span></div></div></div>
       <div class="stat red"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><div class="sl">แพ็คล่าช้า</div><div class="sv"><span id="cLate">—</span><span class="sp" id="cLatePct"></span></div></div></div>
-      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div><div><div class="sl">Orders</div><div class="sv" id="cTotal">—</div></div></div>
+      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div><div><div class="sl">ออเดอร์ทั้งหมดในช่วง</div><div class="sv" id="cTotal">—</div></div></div>
     </div>
     <div class="stats small">
       <div class="stat dark"><div><div class="sl">แพ็คก่อนกำหนด</div><div class="sv" id="cEarly">—</div></div></div>
@@ -466,11 +466,10 @@ function render(){
   b.textContent = !total ? 'ไม่มีข้อมูลในช่วงนี้' : pass ? '✓ ผ่านเกณฑ์' : '✕ ไม่ผ่านเกณฑ์';
 
   // การ์ด
-  const units = kpi.reduce((s,r) => s + parseProducts(r.product).reduce((a,[,n]) => a + n, 0), 0);
-  $('cUnits').textContent = num(units);
+  $('cUnits').textContent = num(total);
   $('cOnTime').textContent = num(onTime); $('cOnPct').textContent = total ? pct.toFixed(2) + '%' : '';
   $('cLate').textContent = num(late); $('cLatePct').textContent = total ? (late/total*100).toFixed(2) + '%' : '';
-  $('cTotal').textContent = num(total);
+  $('cTotal').textContent = num(period.length);
   $('cEarly').textContent = num(early); $('cCancel').textContent = num(cancelled); $('cPending').textContent = num(pending);
   $('cAvgLate').textContent = late ? (lateAll.reduce((s,r) => s + r.lateDays, 0) / late).toFixed(1) : '—';
 
