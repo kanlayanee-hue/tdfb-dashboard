@@ -267,7 +267,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
       <h2 class="sec-title">Late Orders <small id="detailCap">รายละเอียดออเดอร์ที่แพ็คล่าช้า</small></h2>
       <div class="panel">
         <div class="table-wrap"><table id="detailTable">
-          <thead><tr><th>สัปดาห์</th><th>เลข PACK</th><th>เลข SO</th><th>ร้าน</th><th>แพลตฟอร์ม</th><th>สินค้า</th><th>วันกำหนดแพ็ค</th><th>วันที่แพ็ค</th><th>ล่าช้า (วัน)</th><th>สาเหตุ</th><th>ขนส่ง</th></tr></thead>
+          <thead><tr><th>เลข SO</th><th>ร้าน</th><th>แพลตฟอร์ม</th><th>สินค้า</th><th>วันกำหนดแพ็ค</th><th>วันที่แพ็ค</th><th>ล่าช้า (วัน)</th><th>สาเหตุ</th></tr></thead>
           <tbody></tbody>
         </table></div>
       </div>
@@ -536,10 +536,10 @@ function drawDetail(lateRows){
   const rows = lateRows.slice().sort((a,b) => (b.packed || b.due).localeCompare(a.packed || a.due));
   $('detailCap').textContent = `ออเดอร์แพ็คล่าช้า ${num(rows.length)} ออเดอร์ · เรียงจากวันที่แพ็คล่าสุด`;
   $('detailTable').querySelector('tbody').innerHTML = rows.length ? rows.map(r => `<tr>
-    <td>${esc(r.week.replace(/^\d{4}-/,''))}</td><td>${esc(r.pack)}</td><td>${esc(r.so)}</td><td>${esc(r.shop)}</td><td>${esc(r.plat)}</td>
+    <td>${esc(r.so)}</td><td>${esc(r.shop)}</td><td>${esc(r.plat)}</td>
     <td class="prod" title="${esc(r.product)}">${esc(r.product)}</td><td>${esc(r.due)}</td><td>${esc(r.packed || '—')}</td>
-    <td class="late">${r.lateDays || '—'}</td><td class="cause" title="${esc(r.cause)}">${esc(r.cause || '—')}</td><td>${esc(r.courier)}</td></tr>`).join('')
-    : '<tr><td colspan="11" style="color:var(--muted);text-align:center;">ไม่มีออเดอร์ล่าช้าในช่วงที่เลือก</td></tr>';
+    <td class="late">${r.lateDays || '—'}</td><td class="cause" title="${esc(r.cause)}">${esc(r.cause || '—')}</td></tr>`).join('')
+    : '<tr><td colspan="8" style="color:var(--muted);text-align:center;">ไม่มีออเดอร์ล่าช้าในช่วงที่เลือก</td></tr>';
 }
 
 /* ===== ปุ่มเครื่องมือ ===== */
