@@ -114,6 +114,8 @@ svg text.pct.bad{fill:var(--alert);} svg text.pct.good{fill:var(--teal-light);}
 .wide .bar-item .bn{width:280px;}
 @media (max-width:640px){.wide .bar-item .bn{width:130px;}}
 
+#courierBars .bar-item .bn{width:400px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;}
+@media (max-width:640px){#courierBars .bar-item .bn{width:170px;}}
 .pie-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;}
 .donut{width:150px;height:150px;border-radius:50%;background:var(--line);position:relative;}
 .donut::after{content:"";position:absolute;inset:34px;border-radius:50%;background:var(--panel);}
@@ -254,7 +256,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
     </div>
 
     <div class="section">
-      <h2 class="sec-title">Top 10 Couriers <small>ขนส่งที่ใช้มากที่สุด</small></h2>
+      <h2 class="sec-title">Top 5 Couriers <small>ขนส่งที่ใช้มากที่สุด</small></h2>
       <div class="panel wide"><div id="courierBars"></div></div>
     </div>
 
@@ -494,7 +496,7 @@ function render(){
     /ล่าช้า/.test(s) ? '#FF8A65' : /ยกเลิก/.test(s) ? '#7A78A8' : s === '' ? '#E6B94D' : '#14A58A']));
   $('platBars').innerHTML = barsHTML(countBy(chipRows, 'plat').slice(0,8));
   $('shopBars').innerHTML = barsHTML(countBy(chipRows, 'shop').slice(0,8));
-  $('courierBars').innerHTML = barsHTML(countBy(chipRows, 'courier').slice(0,10));
+  $('courierBars').innerHTML = barsHTML(countBy(chipRows, 'courier').slice(0,5));
   drawShopPie(chipRows);
   drawProducts(chipRows);
   const lateRows = chipRows.filter(r => r.isLate);
