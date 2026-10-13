@@ -217,7 +217,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
       <div class="stat dark"><div><div class="sl">แพ็คก่อนกำหนด</div><div class="sv" id="cEarly">—</div></div></div>
       <div class="stat dark"><div><div class="sl">ยกเลิก</div><div class="sv" id="cCancel">—</div></div></div>
       <div class="stat dark"><div><div class="sl">ยังไม่มีสถานะแพ็ค</div><div class="sv" id="cPending">—</div></div></div>
-      <div class="stat dark"><div><div class="sl">ล่าช้าเฉลี่ย (วัน)</div><div class="sv" id="cAvgLate">—</div></div></div>
+      <div class="stat dark"><div><div class="sl">อัตราล่าช้า (%)</div><div class="sv" id="cAvgLate">—</div></div></div>
     </div>
 
     <div class="section">
@@ -471,7 +471,7 @@ function render(){
   $('cLate').textContent = num(late); $('cLatePct').textContent = total ? (late/total*100).toFixed(2) + '%' : '';
   $('cTotal').textContent = num(period.length);
   $('cEarly').textContent = num(early); $('cCancel').textContent = num(cancelled); $('cPending').textContent = num(pending);
-  $('cAvgLate').textContent = late ? (lateAll.reduce((s,r) => s + r.lateDays, 0) / late).toFixed(1) : '—';
+  $('cAvgLate').textContent = total ? (late/total*100).toFixed(2) + '%' : '—';
 
   // ส่วนล่าง: กรองตามชิปสถานะ
   const chipRows = state.chips.has('all') ? kpi : kpi.filter(r => state.chips.has(cls(r)));
