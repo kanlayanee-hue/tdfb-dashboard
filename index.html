@@ -35,7 +35,7 @@ button,select,input{font-family:inherit;}
 .tb-updated b{color:#0F7A6A;}
 
 /* ===== หัวเรื่อง ===== */
-.title-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:18px 0 14px;padding-bottom:14px;border-bottom:1px solid var(--line);}
+.title-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:12px 0 10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
 .title-left{display:flex;align-items:center;gap:16px;}
 .title-icon{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0F6F68,#145A5A);display:flex;align-items:center;justify-content:center;border:1px solid #1E8F86;}
 .title-icon svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -64,49 +64,49 @@ h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.01em;}
 .err{background:#7A2E1A;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none;line-height:1.6;}
 
 /* ===== Hero ===== */
-.hero{border-radius:16px;border:1px solid #1E7F78;background:linear-gradient(120deg,#0F5F5C 0%,#10405A 50%,#1F2262 100%);padding:46px 24px;display:flex;justify-content:center;align-items:center;gap:56px;flex-wrap:wrap;}
-.ring{position:relative;width:210px;height:210px;flex-shrink:0;}
+.hero{border-radius:16px;border:1px solid #1E7F78;background:linear-gradient(120deg,#0F5F5C 0%,#10405A 50%,#1F2262 100%);padding:24px;display:flex;justify-content:center;align-items:center;gap:44px;flex-wrap:wrap;}
+.ring{position:relative;width:150px;height:150px;flex-shrink:0;}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg);}
 .ring .bgc{stroke:rgba(255,255,255,.12);}
 .ring .fg{transition:stroke-dashoffset .6s ease;}
-.ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;}
-.ring-num sup{font-size:20px;font-weight:600;margin-left:2px;align-self:flex-start;margin-top:72px;}
+.ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;}
+.ring-num sup{font-size:15px;font-weight:600;margin-left:2px;align-self:flex-start;margin-top:50px;}
 .hero-info{max-width:380px;}
 .badge{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:8px 16px;font-size:15px;font-weight:600;border:1px solid #2DD4BF;background:rgba(20,165,138,.25);color:#fff;}
 .badge.fail{border-color:var(--alert);background:rgba(255,138,101,.2);}
-.hero-desc{font-size:19px;margin:16px 0 10px;}
-.hero-target{font-size:18px;font-weight:700;}
+.hero-desc{font-size:17px;margin:12px 0 6px;}
+.hero-target{font-size:16px;font-weight:700;}
 
 /* ===== การ์ดตัวเลข ===== */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;}
 @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}}
-.stat{border-radius:12px;padding:20px 22px;display:flex;gap:16px;align-items:center;border:1px solid transparent;}
-.stat .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.stat{border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center;border:1px solid transparent;}
+.stat .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .stat .ic svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
-.stat .sl{font-size:16px;font-weight:600;}
-.stat .sv{font-size:34px;font-weight:700;line-height:1.15;}
+.stat .sl{font-size:14px;font-weight:600;}
+.stat .sv{font-size:26px;font-weight:700;line-height:1.15;}
 .stat .sp{font-size:14px;font-weight:600;margin-left:8px;}
 .stat.blue{background:#F2F5FF;color:#14163A;border-color:#DCE3FF;} .stat.blue .ic{background:#3B6FD8;}
 .stat.green{background:#EAF8F2;color:#0E7A55;border-color:#C5EBD9;} .stat.green .ic{background:#139E75;} .stat.green .sl{color:#1B3B33;}
 .stat.red{background:#FFF0F0;color:#D1283C;border-color:#FAD0D4;} .stat.red .ic{background:#E5484D;} .stat.red .sl{color:#3B1B1B;}
 .stat.dark{background:var(--panel);border-color:var(--line);color:var(--ink);} .stat.dark .ic{background:#3F3D7A;}
-.stat.dark .sv{font-size:26px;}
+.stat.dark .sv{font-size:20px;}
 .stats.small{margin-top:8px;}
 
 /* ===== ส่วนกราฟ ===== */
-.section{margin-top:26px;}
-.sec-title{display:flex;align-items:baseline;gap:10px;margin:0 0 14px;font-size:22px;font-weight:700;border-left:4px solid var(--teal-light);padding-left:10px;line-height:1.2;}
+.section{margin-top:16px;}
+.sec-title{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;font-size:19px;font-weight:700;border-left:4px solid var(--teal-light);padding-left:10px;line-height:1.2;}
 .sec-title small{font-size:14px;font-weight:400;color:var(--muted);}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 @media (max-width:820px){.grid3{grid-template-columns:1fr;}}
-.panel h3{margin:0 0 14px;font-size:16px;font-weight:600;}
+.panel h3{margin:0 0 10px;font-size:15px;font-weight:600;}
 
 svg text{font-family:'IBM Plex Mono',monospace;font-size:12px;fill:var(--muted);}
 svg text.v{fill:var(--ink);font-weight:600;}
 svg text.pct.bad{fill:var(--alert);} svg text.pct.good{fill:var(--teal-light);}
 
-.bar-item{display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:10px;}
+.bar-item{display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:7px;}
 .bar-item .bn{width:150px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bar-item .bt{flex:1;height:7px;background:var(--line);border-radius:4px;overflow:hidden;}
 .bar-item .bf{height:100%;border-radius:4px;}
@@ -114,8 +114,10 @@ svg text.pct.bad{fill:var(--alert);} svg text.pct.good{fill:var(--teal-light);}
 .wide .bar-item .bn{width:280px;}
 @media (max-width:640px){.wide .bar-item .bn{width:130px;}}
 
-#courierBars .bar-item .bn{width:400px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;}
-@media (max-width:640px){#courierBars .bar-item .bn{width:170px;}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media (max-width:820px){.grid2{grid-template-columns:1fr;}}
+.grid2 .bar-item .bn{width:200px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35;}
+@media (max-width:640px){.grid2 .bar-item .bn{width:130px;}}
 .pie-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;}
 .donut{width:150px;height:150px;border-radius:50%;background:var(--line);position:relative;}
 .donut::after{content:"";position:absolute;inset:34px;border-radius:50%;background:var(--panel);}
@@ -123,7 +125,7 @@ svg text.pct.bad{fill:var(--alert);} svg text.pct.good{fill:var(--teal-light);}
 .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .legend-item .lv{margin-left:auto;padding-left:16px;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:12px;}
 
-.table-wrap{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:8px;}
+.table-wrap{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{position:sticky;top:0;background:var(--panel);z-index:2;text-align:left;color:var(--muted);font-weight:600;padding:10px;border-bottom:2px solid var(--teal);white-space:nowrap;}
 td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
@@ -198,14 +200,6 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
       </div>
     </div>
 
-    <div class="chips" id="chips">
-      <span class="chips-label">สถานะการแพ็ค</span>
-      <label class="chip on" data-chip="all"><input type="checkbox" checked>ทั้งหมด</label>
-      <label class="chip" data-chip="on"><input type="checkbox">On time</label>
-      <label class="chip" data-chip="early"><input type="checkbox">Early</label>
-      <label class="chip" data-chip="late"><input type="checkbox">Late</label>
-    </div>
-
     <div class="extra">
       <div><label for="fShop">ร้าน</label><select id="fShop"></select></div>
       <div><label for="fPlat">แพลตฟอร์ม</label><select id="fPlat"></select></div>
@@ -243,7 +237,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
 
     <div class="section">
       <h2 class="sec-title">Weekly Orders <small>ออเดอร์รายสัปดาห์ (เขียว = ตรงเวลา · ส้ม = ล่าช้า · % ใต้สัปดาห์ = ตรงเวลา)</small></h2>
-      <div class="panel"><svg id="weekChart" viewBox="0 0 1000 230" width="100%"></svg></div>
+      <div class="panel"><svg id="weekChart" viewBox="0 0 1000 170" width="100%"></svg></div>
     </div>
 
     <div class="section">
@@ -256,18 +250,16 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
     </div>
 
     <div class="section">
-      <h2 class="sec-title">Top 5 Couriers <small>ขนส่งที่ใช้มากที่สุด</small></h2>
-      <div class="panel wide"><div id="courierBars"></div></div>
-    </div>
-
-    <div class="section">
-      <h2 class="sec-title">Store Share <small>สัดส่วนออเดอร์ตามร้าน</small></h2>
-      <div class="panel"><div class="pie-row"><div class="donut" id="shopPie"></div><div id="shopLegend" style="flex:1;min-width:220px;"></div></div></div>
-    </div>
-
-    <div class="section">
-      <h2 class="sec-title">Top Products <small>สินค้าขายดี 10 อันดับ (นับจำนวนชิ้น)</small></h2>
-      <div class="panel wide"><div id="topProducts"></div></div>
+      <div class="grid2">
+        <div>
+          <h2 class="sec-title">Top 5 Couriers <small>ขนส่งที่ใช้มากที่สุด</small></h2>
+          <div class="panel"><div id="courierBars"></div></div>
+        </div>
+        <div>
+          <h2 class="sec-title">Top Products <small>สินค้าขายดี 5 อันดับ (นับชิ้น)</small></h2>
+          <div class="panel"><div id="topProducts"></div></div>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -301,7 +293,7 @@ const COLS = {
   cause:[['สาเหตุ','หมายเหตุ','เหตุผล','REMARK','CAUSE'],13]   // คอลัมน์ N
 };
 
-let ALL = [], state = {mode:'week', key:'', chips:new Set(['all'])};
+let ALL = [], state = {mode:'week', key:''};
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num = n => Number(n).toLocaleString('en-US');
@@ -426,22 +418,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('periodSel').addEventListener('change', e => { state.key = e.target.value; render(); });
   ['fShop','fPlat','fCourier'].forEach(id => $(id).addEventListener('change', render));
   $('fSearch').addEventListener('input', render);
-  document.querySelectorAll('[data-chip]').forEach(ch => ch.addEventListener('click', e => {
-    e.preventDefault();
-    const k = ch.dataset.chip, s = state.chips;
-    if(k === 'all') s.clear(); else if(s.has(k)) s.delete(k); else s.add(k);
-    s.delete('all'); if(!s.size) s.add('all');
-    document.querySelectorAll('[data-chip]').forEach(c => {
-      const on = s.has(c.dataset.chip); c.classList.toggle('on', on); c.querySelector('input').checked = on;
-    });
-    render();
-  }));
   document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement) document.body.classList.remove('present'); });
 });
 function clearFilters(){
   ['fShop','fPlat','fCourier'].forEach(id => $(id).value = ''); $('fSearch').value = '';
-  state.chips = new Set(['all']);
-  document.querySelectorAll('[data-chip]').forEach(c => { const on = c.dataset.chip === 'all'; c.classList.toggle('on', on); c.querySelector('input').checked = on; });
   render();
 }
 
@@ -490,14 +470,13 @@ function render(){
   $('cAvgLate').textContent = total ? (late/total*100).toFixed(2) + '%' : '—';
 
   // ส่วนล่าง: กรองตามชิปสถานะ
-  const chipRows = state.chips.has('all') ? kpi : kpi.filter(r => state.chips.has(cls(r)));
+  const chipRows = kpi;
   drawWeekly(base.filter(r => !r.isCancel && !r.isPending));
   $('statusBars').innerHTML = barsHTML(countBy(period, 'status').map(([s,n]) => [s || '(ยังไม่มีสถานะ)', n,
     /ล่าช้า/.test(s) ? '#FF8A65' : /ยกเลิก/.test(s) ? '#7A78A8' : s === '' ? '#E6B94D' : '#14A58A']));
   $('platBars').innerHTML = barsHTML(countBy(chipRows, 'plat').slice(0,8));
   $('shopBars').innerHTML = barsHTML(countBy(chipRows, 'shop').slice(0,8));
   $('courierBars').innerHTML = barsHTML(countBy(chipRows, 'courier').slice(0,5));
-  drawShopPie(chipRows);
   drawProducts(chipRows);
   const lateRows = chipRows.filter(r => r.isLate);
   drawDetail(lateRows);
@@ -510,23 +489,17 @@ function barsHTML(items){
   return items.map(([n,c,col],i) => `<div class="bar-item"><div class="bn" title="${esc(n)}">${esc(n)}</div><div class="bt"><div class="bf" style="width:${c/max*100}%;background:${col || PALETTE[i % PALETTE.length]}"></div></div><div class="bv">${num(c)}</div></div>`).join('')
     || '<div style="color:var(--muted);font-size:13px;">ไม่มีข้อมูล</div>';
 }
-function drawShopPie(rows){
-  const e = countBy(rows,'shop'), t = rows.length || 1; let acc = 0;
-  const stops = e.map(([n,c],i) => { const p = c/t*100, s = `${PALETTE[i%PALETTE.length]} ${acc.toFixed(2)}% ${(acc+p).toFixed(2)}%`; acc += p; return s; }).join(', ');
-  $('shopPie').style.background = stops ? `conic-gradient(${stops})` : 'var(--line)';
-  $('shopLegend').innerHTML = e.map(([n,c],i) => `<div class="legend-item"><span class="legend-dot" style="background:${PALETTE[i%PALETTE.length]}"></span>${esc(n)}<span class="lv">${(c/t*100).toFixed(2)}% · ${num(c)} ออเดอร์</span></div>`).join('');
-}
 function drawProducts(rows){
   const m = {};
   rows.forEach(r => parseProducts(r.product).forEach(([n,q]) => { if(!/shipping fee/i.test(n)) m[n] = (m[n] || 0) + q; }));
-  $('topProducts').innerHTML = barsHTML(Object.entries(m).sort((a,b) => b[1] - a[1]).slice(0,10).map(([n,q]) => [n,q,'#14A58A']));
+  $('topProducts').innerHTML = barsHTML(Object.entries(m).sort((a,b) => b[1] - a[1]).slice(0,5).map(([n,q]) => [n,q,'#14A58A']));
 }
 function drawWeekly(rows){
   const by = {};
   rows.forEach(r => { if(!r.week) return; const w = by[r.week] ||= {t:0,l:0}; w.t++; if(r.isLate) w.l++; });
   const weeks = Object.keys(by).sort(), svg = $('weekChart');
   if(!weeks.length){ svg.innerHTML = ''; return; }
-  const W = 1000, H = 230, padL = 10, padR = 10, padT = 28, padB = 52, chartH = H - padT - padB, gap = (W - padL - padR) / weeks.length;
+  const W = 1000, H = 170, padL = 10, padR = 10, padT = 22, padB = 44, chartH = H - padT - padB, gap = (W - padL - padR) / weeks.length;
   const barW = Math.min(46, gap * 0.6), max = Math.max(...weeks.map(w => by[w].t), 1), skip = weeks.length > 16 ? 2 : 1;
   let out = `<line x1="${padL}" x2="${W-padR}" y1="${padT+chartH}" y2="${padT+chartH}" stroke="var(--line)"/>`;
   weeks.forEach((w,i) => {
@@ -537,7 +510,7 @@ function drawWeekly(rows){
     out += `<text class="v" x="${cx}" y="${y-6}" text-anchor="middle">${num(t)}</text>`;
     if(i % skip === 0){
       const p = (t-l)/t*100;
-      out += `<text x="${cx}" y="${padT+chartH+16}" text-anchor="middle">${esc(w.replace(/^\d{4}-/,''))}</text><text class="pct ${p < TARGET_PCT ? 'bad' : 'good'}" x="${cx}" y="${padT+chartH+32}" text-anchor="middle">${p.toFixed(1)}%</text>`;
+      out += `<text x="${cx}" y="${padT+chartH+14}" text-anchor="middle">${esc(w.replace(/^\d{4}-/,''))}</text><text class="pct ${p < TARGET_PCT ? 'bad' : 'good'}" x="${cx}" y="${padT+chartH+28}" text-anchor="middle">${p.toFixed(1)}%</text>`;
     }
   });
   svg.innerHTML = out;
