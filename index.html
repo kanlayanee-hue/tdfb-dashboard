@@ -127,7 +127,7 @@ th{position:sticky;top:0;background:var(--panel);z-index:2;text-align:left;color
 td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
 td.late{color:var(--alert);font-weight:600;}
 td.prod{max-width:340px;overflow:hidden;text-overflow:ellipsis;}
-td.cause{max-width:300px;overflow:hidden;text-overflow:ellipsis;color:var(--gold);}
+td.cause{white-space:normal;min-width:260px;max-width:420px;overflow-wrap:anywhere;line-height:1.5;color:var(--gold);}
 .note{margin-top:22px;font-size:12px;color:var(--muted);line-height:1.7;}
 
 .tb-menu-wrap{position:relative;}
@@ -266,11 +266,6 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
     <div class="section">
       <h2 class="sec-title">Top Products <small>สินค้าขายดี 10 อันดับ (นับจำนวนชิ้น)</small></h2>
       <div class="panel wide"><div id="topProducts"></div></div>
-    </div>
-
-    <div class="section">
-      <h2 class="sec-title">สาเหตุที่แพ็คล่าช้า <small>จากคอลัมน์ N</small></h2>
-      <div class="panel wide"><div id="causeBars"></div></div>
     </div>
 
     <div class="section">
@@ -503,7 +498,6 @@ function render(){
   drawShopPie(chipRows);
   drawProducts(chipRows);
   const lateRows = chipRows.filter(r => r.isLate);
-  drawCauses(lateRows);
   drawDetail(lateRows);
   $('footerStats').textContent = `ช่วง ${keyLabel(state.mode, state.mode === 'all' ? 'all' : state.key)} · KPI คิดจากออเดอร์ที่มีสถานะแพ็คและไม่ยกเลิก ${num(total)} ออเดอร์ · ล่าช้า ${num(late)} · ยกเลิก ${num(cancelled)} · ยังไม่มีสถานะ ${num(pending)}`;
 }
@@ -524,11 +518,6 @@ function drawProducts(rows){
   const m = {};
   rows.forEach(r => parseProducts(r.product).forEach(([n,q]) => { if(!/shipping fee/i.test(n)) m[n] = (m[n] || 0) + q; }));
   $('topProducts').innerHTML = barsHTML(Object.entries(m).sort((a,b) => b[1] - a[1]).slice(0,10).map(([n,q]) => [n,q,'#14A58A']));
-}
-function drawCauses(lateRows){
-  const m = {};
-  lateRows.forEach(r => { const k = r.cause || '(ไม่ระบุสาเหตุ)'; m[k] = (m[k] || 0) + 1; });
-  $('causeBars').innerHTML = barsHTML(Object.entries(m).sort((a,b) => b[1] - a[1]).slice(0,10).map(([n,c]) => [n,c,n.startsWith('(') ? '#7A78A8' : '#FF8A65']));
 }
 function drawWeekly(rows){
   const by = {};
