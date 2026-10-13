@@ -440,7 +440,8 @@ function render(){
   const f = {shop:$('fShop').value, plat:$('fPlat').value, courier:$('fCourier').value};
   const base = ALL.filter(r => (!f.shop || r.shop === f.shop) && (!f.plat || r.plat === f.plat) && (!f.courier || r.courier === f.courier)
     && (!q || r.pack.toLowerCase().includes(q) || r.so.toLowerCase().includes(q)));
-  const period = base.filter(r => state.mode === 'all' || keyOf(r) === state.key);
+  // ถ้ากำลังค้นหาเลข PACK / SO ให้ค้นทุกช่วงเวลา (ไม่ถูกจำกัดด้วยสัปดาห์/เดือนที่เลือก)
+  const period = base.filter(r => q || state.mode === 'all' || keyOf(r) === state.key);
   const kpi = period.filter(r => !r.isCancel && !r.isPending);
   const cancelled = period.filter(r => r.isCancel).length, pending = period.filter(r => !r.isCancel && r.isPending).length;
   const lateAll = kpi.filter(r => r.isLate);
@@ -450,8 +451,8 @@ function render(){
   const pass = total && pct >= TARGET_PCT;
 
   // หัวข้อ + วงแหวน
-  $('dcBig').textContent = state.key || state.mode === 'all' ? keyLabelLong(state.mode, state.mode === 'all' ? 'all' : state.key) : '—';
-  $('dcBadge').textContent = MODE_NAMES[state.mode];
+  $('dcBig').textContent = q ? 'ผลการค้นหา' : (state.key || state.mode === 'all' ? keyLabelLong(state.mode, state.mode === 'all' ? 'all' : state.key) : '—');
+  $('dcBadge').textContent = q ? 'ทุกช่วงเวลา' : MODE_NAMES[state.mode];
   const C = 540.35, fg = $('ringFg');
   fg.style.strokeDashoffset = C * (1 - Math.min(pct,100)/100);
   fg.style.stroke = !total ? '#4A4880' : pass ? '#2DD4BF' : '#FF8A65';
@@ -480,7 +481,7 @@ function render(){
   drawProducts(chipRows);
   const lateRows = chipRows.filter(r => r.isLate);
   drawDetail(lateRows);
-  $('footerStats').textContent = `ช่วง ${keyLabel(state.mode, state.mode === 'all' ? 'all' : state.key)} · KPI คิดจากออเดอร์ที่มีสถานะแพ็คและไม่ยกเลิก ${num(total)} ออเดอร์ · ล่าช้า ${num(late)} · ยกเลิก ${num(cancelled)} · ยังไม่มีสถานะ ${num(pending)}`;
+  $('footerStats').textContent = `${q ? 'ค้นหา "' + q + '" ทุกช่วงเวลา' : 'ช่วง ' + keyLabel(state.mode, state.mode === 'all' ? 'all' : state.key)} · KPI คิดจากออเดอร์ที่มีสถานะแพ็คและไม่ยกเลิก ${num(total)} ออเดอร์ · ล่าช้า ${num(late)} · ยกเลิก ${num(cancelled)} · ยังไม่มีสถานะ ${num(pending)}`;
 }
 
 function countBy(rows, key){ const m = {}; rows.forEach(r => m[r[key]] = (m[r[key]] || 0) + 1); return Object.entries(m).sort((a,b) => b[1] - a[1]); }
