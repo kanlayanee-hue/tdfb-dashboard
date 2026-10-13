@@ -237,7 +237,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
     </div>
 
     <div class="section">
-      <h2 class="sec-title">Weekly Orders <small>ออเดอร์รายสัปดาห์ (เขียว = ตรงเวลา · ส้ม = ล่าช้า · % ใต้สัปดาห์ = ตรงเวลา)</small></h2>
+      <h2 class="sec-title"><span id="trendTitle">Weekly Orders</span> <small id="trendCap">ออเดอร์รายสัปดาห์</small></h2>
       <div class="panel"><svg id="weekChart" viewBox="0 0 1000 170" width="100%"></svg></div>
     </div>
 
@@ -473,7 +473,7 @@ function render(){
 
   // ส่วนล่าง: กรองตามชิปสถานะ
   const chipRows = kpi;
-  drawWeekly(base.filter(r => !r.isCancel && !r.isPending));
+  drawTrend(base.filter(r => !r.isCancel && !r.isPending), q);
   $('statusBars').innerHTML = barsHTML(countBy(period, 'status').map(([s,n]) => [s || '(ยังไม่มีสถานะ)', n,
     /ล่าช้า/.test(s) ? '#FF8A65' : /ยกเลิก/.test(s) ? '#7A78A8' : s === '' ? '#E6B94D' : '#14A58A']));
   $('platBars').innerHTML = barsHTML(countBy(chipRows, 'plat').slice(0,8));
@@ -496,23 +496,38 @@ function drawProducts(rows){
   rows.forEach(r => parseProducts(r.product).forEach(([n,q]) => { if(!/shipping fee/i.test(n)) m[n] = (m[n] || 0) + q; }));
   $('topProducts').innerHTML = barsHTML(Object.entries(m).sort((a,b) => b[1] - a[1]).slice(0,5).map(([n,q]) => [n,q,'#14A58A']));
 }
-function drawWeekly(rows){
+function drawTrend(rows, q){
+  // เลือกสัปดาห์/เดือน → แยกเป็นรายวัน · เลือกวัน → แสดงทั้งสัปดาห์ของวันนั้น · อื่นๆ → รายสัปดาห์
+  const mode = q ? 'all' : state.mode;
+  let data = rows, daily = false, hl = '';
+  if(mode === 'week'){ data = rows.filter(r => r.week === state.key); daily = true; }
+  else if(mode === 'day'){ const f = rows.find(r => r.due === state.key); data = f ? rows.filter(r => r.week === f.week) : []; daily = true; hl = state.key; }
+  else if(mode === 'month'){ data = rows.filter(r => keyOf(r, 'month') === state.key); daily = true; }
+  const gk = daily ? 'due' : 'week';
+  const legend = '(เขียว = ตรงเวลา · ส้ม = ล่าช้า · % ใต้' + (daily ? 'วัน' : 'สัปดาห์') + ' = ตรงเวลา)';
+  $('trendTitle').textContent = daily ? 'Daily Orders' : 'Weekly Orders';
+  $('trendCap').textContent = daily
+    ? 'ออเดอร์รายวันของ ' + (mode === 'month' ? keyLabel('month', state.key) : keyLabel('week', mode === 'day' ? (data[0] ? data[0].week : '') : state.key)) + ' ' + legend
+    : 'ออเดอร์รายสัปดาห์ ' + legend;
+
   const by = {};
-  rows.forEach(r => { if(!r.week) return; const w = by[r.week] ||= {t:0,l:0}; w.t++; if(r.isLate) w.l++; });
-  const weeks = Object.keys(by).sort(), svg = $('weekChart');
-  if(!weeks.length){ svg.innerHTML = ''; return; }
-  const W = 1000, H = 170, padL = 10, padR = 10, padT = 22, padB = 44, chartH = H - padT - padB, gap = (W - padL - padR) / weeks.length;
-  const barW = Math.min(46, gap * 0.6), max = Math.max(...weeks.map(w => by[w].t), 1), skip = weeks.length > 16 ? 2 : 1;
+  data.forEach(r => { const k = r[gk]; if(!k) return; const w = by[k] ||= {t:0,l:0}; w.t++; if(r.isLate) w.l++; });
+  const keys = Object.keys(by).sort(), svg = $('weekChart');
+  if(!keys.length){ svg.innerHTML = '<text x="500" y="85" text-anchor="middle">ไม่มีข้อมูลในช่วงนี้</text>'; return; }
+
+  const DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const lab = k => daily ? DOW[new Date(k + 'T00:00:00').getDay()] + ' ' + k.slice(8) + '/' + k.slice(5,7) : k.replace(/^\d{4}-/, '');
+  const W = 1000, H = 170, padL = 10, padR = 10, padT = 22, padB = 44, chartH = H - padT - padB, gap = (W - padL - padR) / keys.length;
+  const barW = Math.min(daily ? 64 : 46, gap * 0.6), max = Math.max(...keys.map(k => by[k].t), 1), skip = keys.length > 16 ? 2 : 1;
   let out = `<line x1="${padL}" x2="${W-padR}" y1="${padT+chartH}" y2="${padT+chartH}" stroke="var(--line)"/>`;
-  weeks.forEach((w,i) => {
-    const {t,l} = by[w], cx = padL + gap*i + gap/2, h = t/max*chartH, hl = l/max*chartH, y = padT + chartH - h;
-    const sel = state.mode === 'week' && w === state.key;
-    out += `<rect x="${cx-barW/2}" y="${y}" width="${barW}" height="${h-hl}" fill="#14A58A" rx="2" ${sel ? 'stroke="#fff" stroke-width="2"' : ''}/>`;
-    if(l) out += `<rect x="${cx-barW/2}" y="${y+h-hl}" width="${barW}" height="${hl}" fill="#FF8A65" rx="2"/>`;
+  keys.forEach((k,i) => {
+    const {t,l} = by[k], cx = padL + gap*i + gap/2, h = t/max*chartH, hh = l/max*chartH, y = padT + chartH - h;
+    out += `<rect x="${cx-barW/2}" y="${y}" width="${barW}" height="${h-hh}" fill="#14A58A" rx="2" ${k === hl ? 'stroke="#fff" stroke-width="2"' : ''}/>`;
+    if(l) out += `<rect x="${cx-barW/2}" y="${y+h-hh}" width="${barW}" height="${hh}" fill="#FF8A65" rx="2"/>`;
     out += `<text class="v" x="${cx}" y="${y-6}" text-anchor="middle">${num(t)}</text>`;
     if(i % skip === 0){
       const p = (t-l)/t*100;
-      out += `<text x="${cx}" y="${padT+chartH+14}" text-anchor="middle">${esc(w.replace(/^\d{4}-/,''))}</text><text class="pct ${p < TARGET_PCT ? 'bad' : 'good'}" x="${cx}" y="${padT+chartH+28}" text-anchor="middle">${p.toFixed(1)}%</text>`;
+      out += `<text x="${cx}" y="${padT+chartH+14}" text-anchor="middle">${esc(lab(k))}</text><text class="pct ${p < TARGET_PCT ? 'bad' : 'good'}" x="${cx}" y="${padT+chartH+28}" text-anchor="middle">${p.toFixed(1)}%</text>`;
     }
   });
   svg.innerHTML = out;
