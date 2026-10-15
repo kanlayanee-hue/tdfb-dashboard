@@ -243,7 +243,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
       <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div><div><div class="sl">จำนวนออเดอร์ทั้งหมด</div><div class="sv"><span id="cUnits">—</span></div><div class="delta sm" id="unitsDelta"></div></div></div>
       <div class="stat green"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg></div><div><div class="sl">แพ็คตรงเวลา</div><div class="sv"><span id="cOnTime">—</span><span class="sp" id="cOnPct"></span></div></div></div>
       <div class="stat red"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><div class="sl">แพ็คล่าช้า</div><div class="sv"><span id="cLate">—</span></div></div></div>
-      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div><div><div class="sl">ออเดอร์ที่นับ KPI</div><div class="sv" id="cTotal">—</div></div></div>
+      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div><div><div class="sl">วันพีคสุด</div><div class="sv" id="cTotal">—</div><div class="delta sm flat" id="peakSub"></div></div></div>
     </div>
     <div class="stats small">
       <div class="stat dark"><div><div class="sl">แพ็คก่อนกำหนด</div><div class="sv" id="cEarly">—</div></div></div>
@@ -570,7 +570,16 @@ function render(){
   if(total) setNum('cOnPct', pct, 2, '%'); else setText('cOnPct', '');
   setNum('cLate', late);
   document.querySelector('.stat.red').classList.toggle('warn', late > 0);
-  setNum('cTotal', total);
+  // วันพีคสุด = วันที่มีออเดอร์มากที่สุดในช่วงที่เลือก (ไม่นับยกเลิก)
+  const dayCnt = {};
+  period.filter(r => !r.isCancel && /^\d{4}-\d{2}-\d{2}$/.test(r.due)).forEach(r => { dayCnt[r.due] = (dayCnt[r.due] || 0) + 1; });
+  const top = Object.entries(dayCnt).sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  if(top){
+    const [d, n] = top, dow = ['อา','จ','อ','พ','พฤ','ศ','ส'][new Date(d + 'T00:00:00').getDay()];
+    const withYear = !q && (state.mode === 'year' || state.mode === 'all');
+    setText('cTotal', withYear ? `${d.slice(8)}/${d.slice(5,7)}/${d.slice(0,4)}` : `${dow} ${d.slice(8)}/${d.slice(5,7)}`);
+    $('peakSub').textContent = num(n) + ' ออเดอร์';
+  } else { setText('cTotal', '—'); $('peakSub').textContent = ''; }
   setNum('cEarly', early); setNum('cCancel', cancelled); setNum('cPending', pending);
   if(total) setNum('cAvgLate', late / total * 100, 2, '%'); else setText('cAvgLate', '—');
 
