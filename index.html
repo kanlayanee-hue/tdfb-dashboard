@@ -119,6 +119,23 @@ svg text.pct.bad{fill:var(--alert);} svg text.pct.good{fill:var(--teal-light);}
 @media (max-width:820px){.grid2{grid-template-columns:1fr;}}
 .grid2 .bar-item .bn{width:200px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35;}
 @media (max-width:640px){.grid2 .bar-item .bn{width:130px;}}
+.hero{position:relative;overflow:hidden;}
+.delta{margin-top:10px;font-size:14px;font-weight:600;min-height:20px;}
+.delta.up{color:#5EE0C3;} .delta.down{color:#FF8A65;} .delta.flat{color:var(--muted);}
+.delta small{font-weight:400;color:var(--muted);margin-left:8px;}
+.delta.sm{margin:2px 0 0;font-size:12px;min-height:0;}
+.stat .delta.up{color:#0E7A55;} .stat .delta.down{color:#C2410C;} .stat .delta.flat{color:#5B6B69;}
+.badge.perfect{background:linear-gradient(135deg,#E6B94D,#F2994A);border-color:transparent;color:#2B1B00;}
+.ring.perfect svg{animation:glow 2.4s ease-in-out infinite;}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 4px rgba(45,212,191,.35));}50%{filter:drop-shadow(0 0 16px rgba(45,212,191,.95));}}
+.stat.red.warn{animation:warnPulse 2s ease-in-out infinite;}
+@keyframes warnPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,0);}50%{box-shadow:0 0 0 4px rgba(229,72,77,.35);}}
+.confetti{position:absolute;top:-14px;width:8px;height:12px;border-radius:2px;opacity:0;animation:fall 2s ease-out forwards;pointer-events:none;}
+@keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0);}100%{opacity:0;transform:translateY(280px) rotate(540deg);}}
+.tip{position:fixed;z-index:100;background:#fff;color:#1B2B2A;padding:8px 12px;border-radius:8px;font-size:12.5px;line-height:1.6;white-space:pre-line;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;display:none;}
+svg text{pointer-events:none;}
+.hit{fill:transparent;} .hit:hover{fill:rgba(255,255,255,.07);}
+@media (prefers-reduced-motion:reduce){.ring.perfect svg,.stat.red.warn{animation:none;}.confetti{display:none;}}
 .pie-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;}
 .donut{width:150px;height:150px;border-radius:50%;background:var(--line);position:relative;}
 .donut::after{content:"";position:absolute;inset:34px;border-radius:50%;background:var(--panel);}
@@ -176,7 +193,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
       </div>
     </div>
     <button class="tb-btn outline" id="btnPresent" onclick="togglePresent()">โหมดพรีเซนต์</button>
-    <div class="tb-updated">ข้อมูลอัปเดตล่าสุด <b id="updatedAt">—</b></div>
+    <div class="tb-updated">ข้อมูลอัปเดตล่าสุด <b id="updatedAt">—</b> · รีเฟรชอัตโนมัติใน <b id="countdown">5:00</b></div>
   </div>
 
   <div class="err" id="errBox"></div>
@@ -209,7 +226,7 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
       <button class="clear" onclick="clearFilters()">ล้างตัวกรอง</button>
     </div>
 
-    <div class="hero">
+    <div class="hero" id="hero">
       <div class="ring">
         <svg viewBox="0 0 200 200"><circle class="bgc" cx="100" cy="100" r="86" fill="none" stroke-width="16"/><circle class="fg" id="ringFg" cx="100" cy="100" r="86" fill="none" stroke="#2DD4BF" stroke-width="16" stroke-linecap="round" stroke-dasharray="540.35" stroke-dashoffset="540.35"/></svg>
         <div class="ring-num"><span id="pctVal">—</span><sup id="pctSign">%</sup></div>
@@ -218,11 +235,12 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
         <div class="badge" id="passBadge">—</div>
         <div class="hero-desc">แพ็คสินค้า <b>ตรงตามกำหนด</b></div>
         <div class="hero-target">เป้าหมาย ≥ 98%</div>
+        <div class="delta" id="heroDelta"></div>
       </div>
     </div>
 
     <div class="stats">
-      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div><div><div class="sl">จำนวนออเดอร์ทั้งหมด</div><div class="sv" id="cUnits">—</div></div></div>
+      <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div><div><div class="sl">จำนวนออเดอร์ทั้งหมด</div><div class="sv"><span id="cUnits">—</span></div><div class="delta sm" id="unitsDelta"></div></div></div>
       <div class="stat green"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg></div><div><div class="sl">แพ็คตรงเวลา</div><div class="sv"><span id="cOnTime">—</span><span class="sp" id="cOnPct"></span></div></div></div>
       <div class="stat red"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><div class="sl">แพ็คล่าช้า</div><div class="sv"><span id="cLate">—</span></div></div></div>
       <div class="stat blue"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div><div><div class="sl">ออเดอร์ที่นับ KPI</div><div class="sv" id="cTotal">—</div></div></div>
@@ -277,11 +295,16 @@ body.present .toolbar .hide-present,body.present .extra{display:none;}
   </div>
 </div>
 
+<div class="tip" id="tip"></div>
+
 <script>
 /* ===== ตั้งค่า ===== */
 const SHEET_ID   = "1nnmp5kcom8oLW71h-mnNJ9ml6f7zMfWPHL0KpC1cUz8";
 const SHEET_NAME = "Packing ใหม่";     // ชื่อแท็บในชีท ต้องตรงทุกตัวอักษร
 const TARGET_PCT = 98;
+const REFRESH_MS = 5 * 60 * 1000;   // รีเฟรชข้อมูลอัตโนมัติทุก 5 นาที
+let nextRefresh = Date.now() + REFRESH_MS, lastPerfect = '';
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const MODE_NAMES = {all:'ทั้งหมด',year:'รายปี',quarter:'ไตรมาส',month:'รายเดือน',week:'รายสัปดาห์',day:'รายวัน'};
 const PALETTE = ['#14A58A','#E6B94D','#7C6CF0','#FF8A65','#4FC3F7','#9CCC65','#F06292','#C39BD3','#F2994A','#5EE0C3'];
@@ -303,6 +326,7 @@ const pad = n => String(n).padStart(2,'0');
 /* ===== โหลดข้อมูล ===== */
 function loadSheet(){
   $('errBox').style.display = 'none';
+  nextRefresh = Date.now() + REFRESH_MS;
   clearTimeout(window._t);
   window.google = window.google || {}; window.google.visualization = window.google.visualization || {};
   window.google.visualization.Query = { setResponse(json){
@@ -435,6 +459,57 @@ function parseProducts(text){
   return out;
 }
 
+/* ===== ลูกเล่น: ตัวเลขนับขึ้น / เทียบช่วงก่อนหน้า / ฉลอง / tooltip / รีเฟรชอัตโนมัติ ===== */
+function setNum(id, to, dec = 0, suffix = ''){
+  const el = $(id), from = el._v ?? 0;
+  el._v = to;
+  const fmt = v => (dec ? v.toFixed(dec) : num(Math.round(v))) + suffix;
+  cancelAnimationFrame(el._raf);
+  if(REDUCED || from === to){ el.textContent = fmt(to); return; }
+  const t0 = performance.now(), dur = 700;
+  const tick = now => {
+    const k = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmt(from + (to - from) * e);
+    if(k < 1) el._raf = requestAnimationFrame(tick);
+  };
+  el._raf = requestAnimationFrame(tick);
+}
+function setText(id, text){ const el = $(id); cancelAnimationFrame(el._raf); el._v = undefined; el.textContent = text; }
+function periodStats(rows){
+  const k = rows.filter(r => !r.isCancel && !r.isPending), l = k.filter(r => r.isLate).length;
+  return {n:rows.length, pct:k.length ? (k.length - l) / k.length * 100 : null};
+}
+function burst(){
+  if(REDUCED) return;
+  const h = $('hero'), cols = ['#2DD4BF','#E6B94D','#FF8A65','#7C6CF0','#F1EEFF'];
+  for(let i = 0; i < 36; i++){
+    const c = document.createElement('i');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.background = cols[i % cols.length];
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    c.style.animationDuration = (1.6 + Math.random() * 1.2) + 's';
+    h.appendChild(c);
+    setTimeout(() => c.remove(), 3600);
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const svg = $('weekChart'), tip = $('tip');
+  svg.addEventListener('mousemove', e => {
+    const t = e.target.closest('[data-tip]');
+    if(!t){ tip.style.display = 'none'; return; }
+    tip.textContent = t.dataset.tip; tip.style.display = 'block';
+    tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px';
+    tip.style.top = (e.clientY + 16) + 'px';
+  });
+  svg.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+});
+setInterval(() => {
+  const left = Math.max(0, nextRefresh - Date.now());
+  $('countdown').textContent = Math.floor(left / 60000) + ':' + String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
+  if(left === 0 && !document.hidden && !$('btnSave').disabled) loadSheet();
+}, 1000);
+
 function render(){
   if(!ALL.length) return;
   const q = $('fSearch').value.trim().toLowerCase();
@@ -454,22 +529,50 @@ function render(){
   // หัวข้อ + วงแหวน
   $('dcBig').textContent = q ? 'ผลการค้นหา' : (state.key || state.mode === 'all' ? keyLabelLong(state.mode, state.mode === 'all' ? 'all' : state.key) : '—');
   $('dcBadge').textContent = q ? 'ทุกช่วงเวลา' : MODE_NAMES[state.mode];
+  const perfect = !q && total > 0 && late === 0;
   const C = 540.35, fg = $('ringFg');
   fg.style.strokeDashoffset = C * (1 - Math.min(pct,100)/100);
   fg.style.stroke = !total ? '#4A4880' : pass ? '#2DD4BF' : '#FF8A65';
-  $('pctVal').textContent = total ? pct.toFixed(2) : '—';
+  if(total) setNum('pctVal', pct, 2); else setText('pctVal', '—');
   $('pctSign').style.display = total ? '' : 'none';
+  document.querySelector('.ring').classList.toggle('perfect', perfect);
   const b = $('passBadge');
-  b.className = 'badge' + (total && !pass ? ' fail' : '');
-  b.textContent = !total ? 'ไม่มีข้อมูลในช่วงนี้' : pass ? '✓ ผ่านเกณฑ์' : '✕ ไม่ผ่านเกณฑ์';
+  b.className = 'badge' + (perfect ? ' perfect' : total && !pass ? ' fail' : '');
+  b.textContent = !total ? 'ไม่มีข้อมูลในช่วงนี้' : perfect ? '🏆 Perfect · ไม่มีออเดอร์ล่าช้า' : pass ? '✓ ผ่านเกณฑ์' : '✕ ไม่ผ่านเกณฑ์';
+  const pk = perfect ? state.mode + '|' + state.key : '';
+  if(pk && pk !== lastPerfect) burst();
+  lastPerfect = pk;
+
+  // เทียบกับช่วงก่อนหน้า
+  let prev = null;
+  if(!q && state.mode !== 'all'){
+    const keys = periodKeys(state.mode), idx = keys.indexOf(state.key);
+    if(idx > 0) prev = Object.assign({key:keys[idx-1]}, periodStats(base.filter(r => keyOf(r) === keys[idx-1])));
+  }
+  const arrow = (d, dec, unit) => Math.abs(d) < Math.pow(10, -dec) / 2 ? '▬ ทรงตัว' : (d > 0 ? '▲ +' : '▼ −') + Math.abs(d).toFixed(dec) + unit;
+  const cls2 = d => 'delta' + (Math.abs(d) < 0.005 ? ' flat' : d > 0 ? ' up' : ' down');
+  const hd = $('heroDelta');
+  if(prev && prev.pct !== null && total){
+    const d = pct - prev.pct;
+    hd.className = cls2(d);
+    hd.innerHTML = arrow(d, 2, '%') + '<small>เทียบ ' + esc(keyLabel(state.mode, prev.key)) + ' (' + prev.pct.toFixed(2) + '%)</small>';
+  } else { hd.className = 'delta'; hd.textContent = ''; }
+  const ud = $('unitsDelta');
+  if(prev && prev.n){
+    const d = (period.length - prev.n) / prev.n * 100;
+    ud.className = 'delta sm' + (Math.abs(d) < 0.05 ? ' flat' : d > 0 ? ' up' : ' down');
+    ud.textContent = arrow(d, 1, '%') + ' จาก ' + keyLabel(state.mode, prev.key);
+  } else { ud.className = 'delta sm'; ud.textContent = ''; }
 
   // การ์ด
-  $('cUnits').textContent = num(period.length);
-  $('cOnTime').textContent = num(onTime); $('cOnPct').textContent = total ? pct.toFixed(2) + '%' : '';
-  $('cLate').textContent = num(late);
-  $('cTotal').textContent = num(total);
-  $('cEarly').textContent = num(early); $('cCancel').textContent = num(cancelled); $('cPending').textContent = num(pending);
-  $('cAvgLate').textContent = total ? (late/total*100).toFixed(2) + '%' : '—';
+  setNum('cUnits', period.length);
+  setNum('cOnTime', onTime);
+  if(total) setNum('cOnPct', pct, 2, '%'); else setText('cOnPct', '');
+  setNum('cLate', late);
+  document.querySelector('.stat.red').classList.toggle('warn', late > 0);
+  setNum('cTotal', total);
+  setNum('cEarly', early); setNum('cCancel', cancelled); setNum('cPending', pending);
+  if(total) setNum('cAvgLate', late / total * 100, 2, '%'); else setText('cAvgLate', '—');
 
   // ส่วนล่าง: กรองตามชิปสถานะ
   const chipRows = kpi;
@@ -525,6 +628,7 @@ function drawTrend(rows, q){
     out += `<rect x="${cx-barW/2}" y="${y}" width="${barW}" height="${h-hh}" fill="#14A58A" rx="2" ${k === hl ? 'stroke="#fff" stroke-width="2"' : ''}/>`;
     if(l) out += `<rect x="${cx-barW/2}" y="${y+h-hh}" width="${barW}" height="${hh}" fill="#FF8A65" rx="2"/>`;
     out += `<text class="v" x="${cx}" y="${y-6}" text-anchor="middle">${num(t)}</text>`;
+    out += `<rect class="hit" x="${padL + gap*i}" y="0" width="${gap}" height="${H}" data-tip="${esc(lab(k))}&#10;ทั้งหมด ${num(t)} ออเดอร์&#10;ตรงเวลา ${num(t-l)} (${((t-l)/t*100).toFixed(2)}%)&#10;ล่าช้า ${num(l)}"/>`;
     if(i % skip === 0){
       const p = (t-l)/t*100;
       out += `<text x="${cx}" y="${padT+chartH+14}" text-anchor="middle">${esc(lab(k))}</text><text class="pct ${p < TARGET_PCT ? 'bad' : 'good'}" x="${cx}" y="${padT+chartH+28}" text-anchor="middle">${p.toFixed(1)}%</text>`;
