@@ -668,8 +668,8 @@ function drawTrend(rows, q){
   svg.innerHTML = out;
 }
 function drawDetail(lateRows){
-  const rows = lateRows.slice().sort((a,b) => (b.packed || b.due).localeCompare(a.packed || a.due));
-  $('detailCap').textContent = `ออเดอร์แพ็คล่าช้า ${num(rows.length)} ออเดอร์ · เรียงจากวันที่แพ็คล่าสุด`;
+  const rows = lateRows.slice().sort((a,b) => b.due.localeCompare(a.due) || (b.packed || '').localeCompare(a.packed || ''));
+  $('detailCap').textContent = `ออเดอร์แพ็คล่าช้า ${num(rows.length)} ออเดอร์ · เรียงจากวันกำหนดแพ็คล่าสุด`;
   $('detailTable').querySelector('tbody').innerHTML = rows.length ? rows.map(r => `<tr>
     <td>${esc(r.so)}</td><td>${esc(r.shop)}</td><td>${esc(r.plat)}</td>
     <td class="prod" title="${esc(r.product)}">${esc(r.product)}</td><td>${esc(r.due)}</td><td>${esc(r.packed || '—')}</td>
