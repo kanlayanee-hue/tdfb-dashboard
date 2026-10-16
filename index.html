@@ -623,28 +623,36 @@ function drawProducts(rows){
   $('topProducts').innerHTML = barsHTML(Object.entries(m).sort((a,b) => b[1] - a[1]).slice(0,5).map(([n,q]) => [n,q,'#14A58A']));
 }
 function drawTrend(rows, q){
-  // เลือกสัปดาห์/เดือน → แยกเป็นรายวัน · เลือกวัน → แสดงเฉพาะวันนั้น · อื่นๆ → รายสัปดาห์
+  // สัปดาห์/เดือน → รายวัน · วัน → เฉพาะวันนั้น · ปี/ไตรมาส/ทั้งหมด → รายเดือน · ค้นหา → รายสัปดาห์
   const mode = q ? 'all' : state.mode;
   let data = rows, daily = false, hl = '';
   if(mode === 'week'){ data = rows.filter(r => r.week === state.key); daily = true; }
   else if(mode === 'day'){ data = rows.filter(r => r.due === state.key); daily = true; }
   else if(mode === 'month'){ data = rows.filter(r => keyOf(r, 'month') === state.key); daily = true; }
-  const gk = daily ? 'due' : 'week';
-  const legend = '(เขียว = ตรงเวลา · ส้ม = ล่าช้า · % ใต้' + (daily ? 'วัน' : 'สัปดาห์') + ' = ตรงเวลา)';
-  $('trendTitle').textContent = daily ? 'Daily Orders' : 'Weekly Orders';
+  let monthly = false;
+  if(!q && mode === 'year'){ data = rows.filter(r => keyOf(r, 'year') === state.key); monthly = true; }
+  else if(!q && mode === 'quarter'){ data = rows.filter(r => keyOf(r, 'quarter') === state.key); monthly = true; }
+  else if(!q && mode === 'all'){ monthly = true; }
+  const gOf = r => daily ? r.due : monthly ? (/^\d{4}-\d{2}/.test(r.due) ? r.due.slice(0,7) : '') : r.week;
+  const legend = '(เขียว = ตรงเวลา · ส้ม = ล่าช้า · % ใต้' + (daily ? 'วัน' : monthly ? 'เดือน' : 'สัปดาห์') + ' = ตรงเวลา)';
+  $('trendTitle').textContent = daily ? 'Daily Orders' : monthly ? 'Monthly Orders' : 'Weekly Orders';
   $('trendCap').textContent = daily
     ? (mode === 'day' ? 'ออเดอร์ของวันที่ ' + keyLabel('day', state.key) : 'ออเดอร์รายวันของ ' + keyLabel(mode, state.key)) + ' ' + legend
+    : monthly ? 'ออเดอร์รายเดือน' + (mode === 'year' ? 'ของปี ' + state.key : mode === 'quarter' ? 'ของ' + keyLabel('quarter', state.key) : 'ทั้งหมด') + ' ' + legend
     : 'ออเดอร์รายสัปดาห์ ' + legend;
 
   const by = {};
-  data.forEach(r => { const k = r[gk]; if(!k) return; const w = by[k] ||= {t:0,l:0}; w.t++; if(r.isLate) w.l++; });
+  data.forEach(r => { const k = gOf(r); if(!k) return; const w = by[k] ||= {t:0,l:0}; w.t++; if(r.isLate) w.l++; });
   const keys = Object.keys(by).sort(), svg = $('weekChart');
   if(!keys.length){ svg.innerHTML = '<text x="500" y="85" text-anchor="middle">ไม่มีข้อมูลในช่วงนี้</text>'; return; }
 
   const DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
-  const lab = k => daily ? DOW[new Date(k + 'T00:00:00').getDay()] + ' ' + k.slice(8) + '/' + k.slice(5,7) : k.replace(/^\d{4}-/, '');
+  const MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const lab = k => daily ? DOW[new Date(k + 'T00:00:00').getDay()] + ' ' + k.slice(8) + '/' + k.slice(5,7)
+    : monthly ? MON[+k.slice(5,7) - 1] + (mode === 'all' ? ' ' + k.slice(2,4) : '')
+    : k.replace(/^\d{4}-/, '');
   const W = 1000, H = 170, padL = 10, padR = 10, padT = 22, padB = 44, chartH = H - padT - padB, gap = (W - padL - padR) / keys.length;
-  const barW = Math.min(daily ? 64 : 46, gap * 0.6), max = Math.max(...keys.map(k => by[k].t), 1), skip = keys.length > 16 ? 2 : 1;
+  const barW = Math.min(daily || monthly ? 64 : 46, gap * 0.6), max = Math.max(...keys.map(k => by[k].t), 1), skip = keys.length > 16 ? 2 : 1;
   let out = `<line x1="${padL}" x2="${W-padR}" y1="${padT+chartH}" y2="${padT+chartH}" stroke="var(--line)"/>`;
   keys.forEach((k,i) => {
     const {t,l} = by[k], cx = padL + gap*i + gap/2, h = t/max*chartH, hh = l/max*chartH, y = padT + chartH - h;
